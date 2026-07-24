@@ -1,0 +1,1601 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#010101">
+    <title>THE ASHEN THRESHOLD</title>
+    <style>
+        /* =========================================
+           ESTILOS (CSS PRO)
+           ========================================= */
+        :root {
+            --bg: #010101;
+            --text: #a0a0a0;
+            --accent: #ffffff;
+            --dim: #1a1a1a;
+            --mystic: #7d4ba7;
+            --danger: #900;
+            --support: #2ea664;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            transition: box-shadow 0.5s ease;
+        }
+
+        body.insanity-mode {
+            box-shadow: inset 0 0 100px rgba(144, 0, 0, 0.5);
+        }
+
+        .glitch-text {
+            animation: glitch 0.3s infinite;
+            color: #ff6666;
+        }
+
+        @keyframes glitch {
+            0% {
+                transform: translate(0);
+            }
+
+            20% {
+                transform: translate(-1px, 1px);
+            }
+
+            40% {
+                transform: translate(-1px, -1px);
+            }
+
+            60% {
+                transform: translate(1px, 1px);
+            }
+
+            80% {
+                transform: translate(1px, -1px);
+            }
+
+            100% {
+                transform: translate(0);
+            }
+        }
+
+        #ash-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        .ash-particle {
+            position: absolute;
+            background: rgba(150, 150, 150, 0.15);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: drift linear infinite;
+        }
+
+        @keyframes drift {
+            0% {
+                transform: translateY(110vh) translateX(0) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 0.5;
+            }
+
+            90% {
+                opacity: 0.5;
+            }
+
+            100% {
+                transform: translateY(-10vh) translateX(50px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .screenshake {
+            animation: screenshake 0.4s ease;
+        }
+
+        .damage-flash {
+            animation: damageFlash 0.3s ease;
+        }
+
+        @keyframes screenshake {
+            0% {
+                transform: translate(1px, 1px);
+            }
+
+            50% {
+                transform: translate(-1px, -1px);
+            }
+
+            100% {
+                transform: translate(0px, 0px);
+            }
+        }
+
+        @keyframes damageFlash {
+            0% {
+                background: #000;
+            }
+
+            50% {
+                background: rgba(144, 0, 0, 0.4);
+            }
+
+            100% {
+                background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
+            }
+        }
+
+        button,
+        select {
+            background: transparent;
+            border: 1px solid var(--dim);
+            color: var(--text);
+            padding: 15px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 1px;
+            user-select: none;
+            z-index: 5;
+        }
+
+        button:hover:not(:disabled),
+        select:hover {
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+        }
+
+        button:disabled {
+            opacity: 0.2;
+            cursor: not-allowed;
+            border-color: transparent !important;
+            color: #444 !important;
+        }
+
+        button.on-cooldown::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 0%;
+            height: 3px;
+            background: var(--mystic);
+            animation: cooldownBar 3s linear forwards;
+        }
+
+        @keyframes cooldownBar {
+            from {
+                width: 0%;
+            }
+
+            to {
+                width: 100%;
+            }
+        }
+
+        select option {
+            background: #000;
+            color: #fff;
+        }
+
+        .screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100dvh;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 10;
+        }
+
+        .screen.active {
+            display: flex;
+            animation: fadeIn 1s ease;
+        }
+
+        /* MENU PRINCIPAL */
+        #menu-screen {
+            background: #000;
+            flex-direction: column;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Cdefs%3E%3CradialGradient id='g' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23111'/%3E%3Cstop offset='100%25' stop-color='%23000'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='400' height='400' fill='url(%23g)'/%3E%3C/svg%3E");
+            background-size: cover;
+            background-position: center;
+        }
+
+        #menu-box {
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+            z-index: 5;
+        }
+
+        #ui-menu-title {
+            color: #f2f2f2;
+            font-size: 2.2em;
+            letter-spacing: 4px;
+            margin-bottom: 30px;
+            animation: glow 2s infinite;
+        }
+
+        .menu-btn {
+            width: 100%;
+            margin-bottom: 15px;
+            border-color: #333;
+        }
+
+        #ui-version {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 0.6em;
+            color: #333;
+            z-index: 5;
+        }
+
+        @keyframes glow {
+
+            0%,
+            100% {
+                text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+            }
+
+            50% {
+                text-shadow: 0 0 15px rgba(255, 255, 255, 0.6), 0 0 20px rgba(125, 75, 167, 0.3);
+            }
+        }
+
+        /* CONFIG, FINAIS E ACERVO */
+        #settings-box,
+        #archive-box {
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid #333;
+            background: #050505;
+            padding: 25px;
+            text-align: center;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            max-height: 90vh;
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-size: 0.85em;
+            text-align: left;
+            gap: 10px;
+        }
+
+        #end-box {
+            text-align: center;
+            max-width: 600px;
+            z-index: 5;
+        }
+
+        #ui-end-header {
+            color: var(--accent);
+            letter-spacing: 2px;
+        }
+
+        #end-type {
+            color: var(--mystic);
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        #end-desc {
+            color: #888;
+            line-height: 1.6;
+            font-size: 0.95em;
+            margin-bottom: 30px;
+        }
+
+        /* JOGO PRINCIPAL */
+        #game-screen {
+            display: none;
+            padding: 10px;
+            flex-direction: column;
+            border: 1px solid var(--dim);
+            background: radial-gradient(circle at center, #0a0a0a 0%, #000 100%);
+            box-shadow: inset 0 0 50px rgba(0, 0, 0, 0.8);
+            max-width: 800px;
+            width: 95%;
+            height: 95dvh;
+            margin: auto;
+            position: relative;
+            z-index: 5;
+        }
+
+        #game-screen.active {
+            display: flex;
+        }
+
+        #progress-container {
+            width: 100%;
+            height: 2px;
+            background: #111;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background: var(--mystic);
+            transition: width 0.5s ease;
+        }
+
+        #stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            padding: 10px;
+            background: rgba(15, 15, 15, 0.8);
+            border-radius: 4px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--dim);
+            flex-shrink: 0;
+        }
+
+        .stat-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.65em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+        }
+
+        .val {
+            font-size: 1.3em;
+            color: var(--accent);
+            margin-top: 3px;
+            font-weight: bold;
+        }
+
+        #log {
+            flex-grow: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding-top: 15px;
+            padding-right: 25px;
+            padding-bottom: 40px;
+            margin-bottom: 25px;
+            mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 100%);
+            scrollbar-width: thin;
+            scrollbar-color: var(--dim) transparent;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .log-entry {
+            margin-bottom: 14px;
+            line-height: 1.5;
+            border-left: 2px solid #222;
+            padding-left: 10px;
+            font-size: 0.90em;
+            animation: fadeInLog 0.5s ease;
+        }
+
+        @keyframes fadeInLog {
+            from {
+                opacity: 0;
+                transform: translateX(5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .lore {
+            color: #888;
+            font-style: italic;
+        }
+
+        .woman {
+            color: var(--mystic);
+            font-weight: bold;
+        }
+
+        .forest {
+            color: var(--danger);
+        }
+
+        .event {
+            color: #d4af37;
+            font-weight: bold;
+        }
+
+        #actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        #actions button {
+            padding: 12px 5px;
+            font-size: 0.7em;
+        }
+
+        /* OVERLAYS E NOTIFICAÇÕES */
+        #mg-overlay,
+        #warning-screen,
+        #dialogue-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #warning-screen {
+            display: flex;
+            z-index: 200;
+            background: #000;
+        }
+
+        #warning-box,
+        #mg-box,
+        #dialogue-box {
+            border-color: var(--mystic);
+            width: 90%;
+            max-width: 450px;
+            padding: 25px;
+            text-align: center;
+            background: #050505;
+        }
+
+        #warning-box {
+            border-color: #333;
+        }
+
+        #mg-bar-container {
+            width: 100%;
+            height: 35px;
+            background: #111;
+            position: relative;
+            border-radius: 4px;
+            margin: 15px 0;
+            border: 1px solid var(--dim);
+            overflow: hidden;
+            transition: background 0.3s;
+        }
+
+        #mg-target {
+            position: absolute;
+            left: 40%;
+            width: 20%;
+            height: 100%;
+            background: rgba(125, 75, 167, 0.3);
+            border-left: 1px solid var(--mystic);
+            border-right: 1px solid var(--mystic);
+        }
+
+        #mg-cursor {
+            position: absolute;
+            left: 0%;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            background: #fff;
+            box-shadow: 0 0 10px #fff;
+        }
+
+        .dial-btn {
+            margin-bottom: 10px;
+            width: 100%;
+            font-size: 0.7em;
+            padding: 12px;
+        }
+
+        /* TELA DE ACERVO */
+        #archive-tabs {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+        }
+
+        .arch-tab {
+            font-size: 0.75em;
+            color: #666;
+            cursor: pointer;
+            text-transform: uppercase;
+            padding: 5px;
+        }
+
+        .arch-tab.active {
+            color: var(--mystic);
+            font-weight: bold;
+            border-bottom: 2px solid var(--mystic);
+        }
+
+        #archive-content {
+            flex-grow: 1;
+            overflow-y: auto;
+            text-align: left;
+            padding-right: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--dim) transparent;
+            margin-bottom: 15px;
+        }
+
+        .arch-item {
+            background: #111;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 2px solid #333;
+            border-radius: 2px;
+        }
+
+        .arch-item.locked {
+            opacity: 0.3;
+            border-color: #111;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .arch-item h4 {
+            margin: 0 0 5px 0;
+            color: var(--accent);
+            font-size: 0.9em;
+        }
+
+        .arch-item p {
+            margin: 0;
+            color: #888;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: -350px;
+            background: rgba(20, 20, 20, 0.95);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            z-index: 500;
+            font-size: 0.8em;
+            transition: right 0.5s ease-out;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-left: 3px solid var(--mystic);
+            width: 300px;
+        }
+
+        .notification.show {
+            right: 20px;
+        }
+
+        .notif-icon {
+            font-size: 1.5em;
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--dim);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--mystic);
+        }
+
+        @media (min-width: 601px) {
+
+            button,
+            select {
+                padding: 15px 10px;
+                font-size: 0.85em;
+            }
+
+            .log-entry {
+                font-size: 0.95em;
+                padding-left: 10px;
+            }
+
+            .val {
+                font-size: 1.6em;
+            }
+
+            .stat-box {
+                font-size: 0.75em;
+            }
+
+            #game-screen {
+                padding: 20px;
+                border-radius: 4px;
+            }
+
+            #actions {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body id="main-body">
+
+    <div id="ash-container"></div>
+
+    <div id="ui-notification" class="notification">
+        <span id="notif-icon" class="notif-icon">📖</span>
+        <div style="display: flex; flex-direction: column;">
+            <b id="notif-title" style="font-size: 1em; color: var(--accent);">Título</b>
+            <span id="notif-desc" style="font-size: 0.85em; color: #aaa; margin-top: 3px;">Descrição</span>
+        </div>
+    </div>
+
+    <div id="warning-screen">
+        <div id="warning-box">
+            <h2 id="ui-warn-title" style="color: var(--danger); margin-top: 0;">CONTENT WARNING</h2>
+            <p id="ui-warn-1" style="color: #888; font-size: 0.9em; line-height: 1.5;">This narrative experience
+                explores themes of isolation, mental deterioration, and psychological horror.</p>
+            <button id="btn-accept"
+                style="width: 100%; border-color: var(--danger); color: var(--danger); margin-top: 20px;">ACCEPT AND
+                AWAKEN</button>
+        </div>
+    </div>
+
+    <div id="menu-screen" class="screen">
+        <div id="menu-box">
+            <h1 id="ui-menu-title">THE ASHEN THRESHOLD</h1>
+            <button id="btn-continue" class="menu-btn" disabled>Continue</button>
+            <button id="btn-new-game" class="menu-btn">New Game</button>
+            <button id="btn-settings-open" class="menu-btn">Settings</button>
+        </div>
+        <div id="ui-version">v1.0.1 - DEMO HOTFIX</div>
+    </div>
+
+    <div id="archive-screen" class="screen">
+        <div id="archive-box">
+            <h2 id="ui-arch-title" style="margin-top:0; color:var(--mystic); letter-spacing: 2px;">THE ARCHIVE</h2>
+            <div id="archive-tabs">
+                <div class="arch-tab active" onclick="engine.renderArchive('mem')"><span id="ui-tab-mem">Memories</span>
+                    (<span id="arch-count-mem">0/8</span>)</div>
+                <div class="arch-tab" onclick="engine.renderArchive('art')"><span id="ui-tab-art">Artifacts</span>
+                    (<span id="arch-count-art">0/8</span>)</div>
+                <div class="arch-tab" onclick="engine.renderArchive('lor')"><span id="ui-tab-lor">Lore</span> (<span
+                        id="arch-count-lor">0/8</span>)</div>
+            </div>
+            <div id="archive-content"></div>
+            <button onclick="engine.switchScreen('game-screen')" style="width:100%; border-color:#333;"
+                id="btn-arch-close">Close</button>
+        </div>
+    </div>
+
+    <div id="settings-screen" class="screen">
+        <div id="settings-box">
+            <h2 id="ui-set-title" style="margin-top:0; color:var(--accent);">Settings</h2>
+            <div class="setting-item"><span id="ui-set-lang">Language</span><select id="lang-select"
+                    style="padding: 8px; font-size: 0.8em; width: 120px;">
+                    <option value="en">English</option>
+                    <option value="pt">Português</option>
+                    <option value="es">Español</option>
+                </select></div>
+            <div class="setting-item"><span id="ui-set-drone">Ambient Drone</span><button id="btn-toggle-drone"
+                    style="padding: 8px 15px; font-size: 0.7em; width: 120px;">ON</button></div>
+            <div class="setting-item"><span id="ui-set-reset">Reset All Progress</span><button id="btn-reset-all"
+                    style="border-color:var(--danger); color:var(--danger); padding: 8px 15px; font-size: 0.7em; width: 120px;">RESET</button>
+            </div>
+            <div class="setting-item" style="border-top: 1px solid #333; padding-top: 20px; margin-top: 20px;"><span
+                    id="ui-set-donate" style="color: #ccc;">Support the Creator</span><button id="btn-donate"
+                    style="border-color: var(--support); color: var(--support); padding: 8px 15px; font-size: 0.7em; width: 120px;">DONATE</button>
+            </div>
+            <button id="btn-settings-close" style="width:100%; margin-top:20px;">Back</button>
+        </div>
+    </div>
+
+    <div id="game-screen">
+        <div id="progress-container">
+            <div id="progress-bar"></div>
+        </div>
+        <div id="stats-grid">
+            <div class="stat-box"><span id="ui-stat-fire">Flame</span><span id="f-count" class="val">0</span></div>
+            <div class="stat-box"><span id="ui-stat-sanity">Sanity</span><span id="s-count" class="val">100</span></div>
+            <div class="stat-box"><span id="ui-stat-wood">Wood</span><span id="w-count" class="val">0</span></div>
+        </div>
+        <div id="log"></div>
+        <div id="actions">
+            <button id="btn-gather">Gather</button>
+            <button id="btn-fire">Stoke (3)</button>
+            <button id="btn-explore">Delve (15)</button>
+            <button id="btn-talk" disabled>Interact</button>
+        </div>
+
+        <div id="camp-box" style="display:none; transition: all 1s ease;">
+            <div id="stats-grid-camp" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; margin-bottom: 15px; border-top: 1px dashed var(--dim); padding-top: 15px;">
+                <div class="stat-box"><span id="ui-stat-meat">Meat</span><span id="meat-count" class="val" style="color:#b22222; text-shadow: 0 0 5px #b22222;">0</span></div>
+                <div class="stat-box"><span id="ui-stat-ashes">Ashes</span><span id="ash-count" class="val" style="color:#aaa;">0</span></div>
+                <div class="stat-box"><span id="ui-stat-pop">Devotees</span><span id="pop-count" class="val" style="color:#6a5acd; text-shadow: 0 0 5px #6a5acd;">0/0</span></div>
+            </div>
+
+            <div id="build-actions" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px;">
+                <button id="btn-build-trap" style="padding: 10px; font-size: 0.7em;" onclick="engine.buildCamp('trap')"><span id="txt-b-trap">Trap</span> <br><span style="color:#aaa;">(20🪵)</span></button>
+                <button id="btn-build-tent" style="padding: 10px; font-size: 0.7em;" onclick="engine.buildCamp('tent')"><span id="txt-b-tent">Shelter</span> <br><span style="color:#aaa;">(50🪵 10🥩)</span></button>
+                <button id="btn-build-totem" style="padding: 10px; font-size: 0.7em;" onclick="engine.buildCamp('totem')"><span id="txt-b-totem">Shrine</span> <br><span style="color:#aaa;">(100🪵 50💀)</span></button>
+            </div>
+
+            <div id="job-actions" style="display: grid; grid-template-columns: 1fr; gap: 5px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.5); padding:8px; border:1px solid var(--dim);">
+                    <span id="lbl-job-gath" style="font-family:monospace; font-size:0.8em; text-transform:uppercase;">Scavengers: 0</span>
+                    <div><button style="padding:5px 10px;" onclick="engine.adjJob('gatherer', -1)">-</button><button style="padding:5px 10px;" onclick="engine.adjJob('gatherer', 1)">+</button></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.5); padding:8px; border:1px solid var(--dim);">
+                    <span id="lbl-job-trap" style="font-family:monospace; font-size:0.8em; text-transform:uppercase;">Hunters: 0</span>
+                    <div><button style="padding:5px 10px;" onclick="engine.adjJob('trapper', -1)">-</button><button style="padding:5px 10px;" onclick="engine.adjJob('trapper', 1)">+</button></div>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.5); padding:8px; border:1px solid var(--dim);">
+                    <span id="lbl-job-keep" style="font-family:monospace; font-size:0.8em; text-transform:uppercase;">Keepers: 0</span>
+                    <div><button style="padding:5px 10px;" onclick="engine.adjJob('keeper', -1)">-</button><button style="padding:5px 10px;" onclick="engine.adjJob('keeper', 1)">+</button></div>
+                </div>
+            </div>
+        </div>
+        <div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 15px;">
+            <div id="btn-open-archive"
+                style="color: var(--mystic); font-size: 0.9em; cursor: pointer; text-transform: uppercase; font-weight: bold; letter-spacing: 1px;">
+                [ Acervo ]</div>
+            <div id="game-menu-icon" style="color: #555; font-size: 1.2em; cursor: pointer;">&#9776;</div>
+        </div>
+    </div>
+
+    <div id="end-screen" class="screen">
+        <div id="end-box">
+            <h1 id="ui-end-header">END OF THE CYCLE</h1>
+            <h2 id="end-title">TITLE</h2>
+            <p id="end-type">Type</p>
+            <p id="end-desc">Description...</p>
+            <button id="btn-end-restart" style="border-color:var(--mystic); color:var(--mystic);">Reborn in
+                Ashes</button>
+        </div>
+    </div>
+
+    <div id="mg-overlay">
+        <div id="mg-box">
+            <h2 id="mg-title" style="color: var(--mystic);">Interact</h2>
+            <p id="mg-desc" style="color: #ccc; margin-bottom: 20px; font-size: 0.9em; line-height: 1.4;">Prepare...</p>
+            <div id="mg-bar-container">
+                <div id="mg-target"></div>
+                <div id="mg-cursor"></div>
+            </div>
+            <button id="btn-mg-action" style="margin-top: 15px; width: 100%;">I AM READY</button>
+        </div>
+    </div>
+
+    <div id="dialogue-overlay" class="screen" style="z-index:150; display:none; background: rgba(0,0,0,0.95);">
+        <div id="dialogue-box"
+            style="border: 1px solid var(--mystic); width: 90%; max-width: 450px; padding: 25px; text-align: center; background: #050505;">
+            <h2 id="ui-dial-title" style="color: var(--mystic); margin-top:0;">Interaction</h2>
+            <p id="dial-desc"
+                style="color: #ccc; margin-bottom: 25px; font-size: 0.95em; line-height: 1.5; font-style: italic;"></p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button id="btn-dial-0" class="dial-btn" onclick="engine.chooseDialogue(0)">Opt 1</button>
+                <button id="btn-dial-1" class="dial-btn" onclick="engine.chooseDialogue(1)">Opt 2</button>
+                <button id="btn-dial-2" class="dial-btn" onclick="engine.chooseDialogue(2)">Opt 3</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================
+        // DICIONÁRIO DE IDIOMAS, LORE E DIÁLOGOS
+        // =========================================
+        const LANG_DATA = {
+            en: {
+                ui: {
+                    warnTitle: "WARNING", warn1: "This narrative explores isolation and mental decay. Headphones recommended.", btnAccept: "AWAKEN",
+                    menuTitle: "THE ASHEN THRESHOLD", btnCont: "Continue", btnNew: "New Game", btnSet: "Settings",
+                    setTitle: "Settings", setLang: "Language", setDrone: "Ambient Sound", setReset: "Reset Data", btnReset: "RESET", btnBack: "Back", setDonate: "Support Me", btnDonate: "PAYPAL",
+                    sFire: "Flame", sSan: "Sanity", sWood: "Wood",
+                    btnGather: "Gather", btnFire: "Stoke (3)", btnExp: "Delve (15)", btnTalk: "Interact",
+                    endHead: "END OF CYCLE", btnRestart: "Reborn in Ashes",
+                    btnReady: "I AM READY", txtOn: "ON", txtOff: "OFF", txtWait: "WAIT...", txtNow: "NOW!",
+                    archTitle: "THE ARCHIVE", archMem: "Memories", archArt: "Artifacts", archLor: "Lore", btnClose: "Close", archBtn: "[ ARCHIVE ]",
+                    notifMem: "New Diary Page Found!", notifArt: "New Artifact Found!", notifLor: "New Lore Learned!", dialTitle: "Interaction",
+                    cMeat: "Meat", cAsh: "Ashes", cPop: "Devotees",
+                    bTrap: "Thorn Trap", bTent: "Ash Shelter", bTotem: "Sacred Shrine",
+                    jGath: "Scavengers", jTrap: "Hunters", jKeep: "Keepers"
+                },
+                archive: {
+                    mem: [
+                        { t: "Day 1 before the Silence", d: "Life was normal. I had a family. The sky was blue." },
+                        { t: "The Fall", d: "The sky turned grey. The endless silence began." },
+                        { t: "The Departure", d: "Everyone vanished. I was left entirely alone." },
+                        { t: "The Fading", d: "I can no longer remember my own face." },
+                        { t: "The Cold", d: "It's not just the temperature. It is the absence of life." },
+                        { t: "The Whispers", d: "They don't come from the trees, they come from inside my head." },
+                        { t: "The Shadow", d: "I saw something moving where the light doesn't reach." },
+                        { t: "The Acceptance", d: "Perhaps I belong to this place now." }
+                    ],
+                    art: [
+                        { t: "Dead Radio", d: "It broadcasts the sound of breathing, even without batteries." },
+                        { t: "Melted Clock", d: "The hands spin backward when I'm not looking." },
+                        { t: "Ash Pendant", d: "A necklace shaped like a closed eye made of compressed ash." },
+                        { t: "Rusted Knife", d: "The blood on its edge never seems to dry." },
+                        { t: "Burnt Doll", d: "A melted toy. Reminds me of someone I lost." },
+                        { t: "Shattered Mirror", d: "It doesn't reflect my face, only the flames." },
+                        { t: "Empty Matchbox", d: "The paper is stained with a black liquid." },
+                        { t: "Faceless Portrait", d: "An old photo, but the face was violently scratched off." }
+                    ],
+                    lor: [
+                        { t: "The Rule of Fire", d: "The fire does not warm the body; it burns the shadows in the mind." },
+                        { t: "The Threshold", d: "This place is a cosmic stomach slowly digesting reality." },
+                        { t: "The Woman", d: "She is not a survivor. Is she the bait... or the warden?" },
+                        { t: "The Cycle", d: "A thousand heartbeats. A thousand sparks. Then, the world resets." },
+                        { t: "The Devourer", d: "The Threshold feeds on regrets. The flame is its indigestion." },
+                        { t: "The Echoes", d: "The voices I hear are from others who failed to keep the flame alive." },
+                        { t: "The Pact", d: "She doesn't speak because her voice was the price to enter here." },
+                        { t: "The Awakening", d: "The cycle cannot be broken by force, only transcended by memory." }
+                    ]
+                },
+                dialogues: [
+                    {
+                        desc: "She is drawing circles in the ashes with a twig.",
+                        opts: [{ t: "Ask what she's drawing.", r: "win", rep: "She points to the fire, then to you. A spark of connection." }, { t: "Erase the drawing.", r: "fail", rep: "She recoils in terror. You broke her trust." }, { t: "Draw alongside her.", r: "win", rep: "She smiles faintly. The darkness recedes." }]
+                    },
+                    {
+                        desc: "She is crying silently, hiding her soot-covered face.",
+                        opts: [{ t: "Ask her name.", r: "neutral", rep: "She shakes her head. Names are forgotten here." }, { t: "Hug her.", r: "win", rep: "She trembles, but accepts the warmth. The cold lessens." }, { t: "Ignore her and focus on the fire.", r: "fail", rep: "Her crying becomes a constant echo in your mind." }]
+                    },
+                    {
+                        desc: "She is staring into the dark forest, watching something unseen.",
+                        opts: [{ t: "Look where she is looking.", r: "fail", rep: "Shadows dance. Your mind aches trying to comprehend the void." }, { t: "Block her view.", r: "win", rep: "She blinks, returning to reality, looking relieved." }, { t: "Throw a branch into the dark.", r: "neutral", rep: "The branch is swallowed without a sound. She sighs." }]
+                    },
+                    {
+                        desc: "She is trembling violently from the unnatural cold.",
+                        opts: [{ t: "Give her your wood.", r: "neutral", rep: "She feeds the fire with it. The trembling stops briefly." }, { t: "Hold her hands.", r: "win", rep: "Her skin is like ice, but your shared warmth helps." }, { t: "Move away from her.", r: "fail", rep: "She notices your disgust and shrinks further into herself." }]
+                    },
+                    {
+                        desc: "She violently coughs black ashes, grasping her throat.",
+                        opts: [{ t: "Pry her mouth open.", r: "neutral", rep: "You scoop out the soot. Her breathing eases, but her lips bleed." }, { t: "Look away.", r: "fail", rep: "The hacking sound drills into your conscience." }, { t: "Hold her face gently.", r: "win", rep: "She stops hacking, clinging to your coat as she gasps." }]
+                    },
+                    {
+                        desc: "She stands up slowly and starts walking towards the dark void.",
+                        opts: [{ t: "Grab her arm.", r: "win", rep: "She snaps out of her trance, looking horrified at the shadows." }, { t: "Let her walk.", r: "fail", rep: "She disappears for seconds before crawling back, sobbing." }, { t: "Call out to the void.", r: "fail", rep: "The shadows stare back. You feel a sudden nausea." }]
+                    },
+                    {
+                        desc: "Using bleeding knuckles, she scratches twisted symbols into her legs.",
+                        opts: [{ t: "Stop her hands.", r: "win", rep: "She fights you, then collapses in exhaustion. A gruesome peace." }, { t: "Wipe the blood away.", r: "neutral", rep: "The wounds remain, but the symbols lose their grip." }, { t: "Study the symbols.", r: "fail", rep: "Your mind bends backward trying to read the unreadable language." }]
+                    }
+                ],
+                textVars: { gather: ["You gather dry twigs.", "More dead wood added."], gatherLore: ["The soil sighed.", "The branch pulsed."], fire: ["The flame rises.", "The fire crackles."], fireFail: ["Not enough twigs.", "The fire refuses."], explore: ["You delve forward.", "The void swallows your footsteps."], exploreFail: ["Impenetrable darkness."], draining: ["The cold tears your thoughts.", "An invisible anguish tightens."], intWin: ["Rare comfort in the abyss.", "You are not alone."], intFail: ["She looks away.", "Panic takes over."], ambientHorror: ["Something breathes right behind your neck.", "Shadows dance at the edge of your vision.", "A branch snaps in the dark. Too close.", "You hear a faint humming that isn't yours.", "The cold feels like dead hands on your shoulders."],
+                cultNew: ["A shrouded figure kneels near the fire, gazing at her.", "A lost soul begs to stay.", "Another pair of hollow eyes watches her."], cultStarve: ["A devotee starved and was swallowed by the dark.", "The hunger took one of them.", "They left, cursing her name."], cultRaid: ["Something from the dark snatched our meat.", "Shadows attacked the camp.", "A trap was violently destroyed."] },
+                milestones: { 10: { text: "She fears her own shadow.", type: "woman" }, 100: { text: "The fire emits memories.", type: "lore" }, 900: { text: "The end is imminent.", type: "lore" } },
+                finals: {
+                    forgotten: { title: "THE FORGOTTEN", type: "Madness", desc: "You became another tree." },
+                    demo: { title: "END OF DEMO", type: "Time's Up", desc: "You survived for 30 minutes! Thank you for playing the demo. Support the creator if you wish to see the full game." }
+                },
+                mg: { syncT: "Synchronize", syncD: "Stop the cursor in the center.", btnSync: "SYNC", resT: "Resistance", resD: "Panic! Click fast.", btnRes: "FIGHT", refT: "Perception", refD: "Wait for WHITE flash.", focT: "Focus", focD: "Hit the target twice.", btnFoc: "FOCUS", equT: "Balance", equD: "Tap steadily to stay center.", btnEqu: "STABILIZE", preT: "Precision", preD: "Strike exactly at the center once.", btnPre: "STRIKE" }
+            },
+            pt: {
+                ui: {
+                    warnTitle: "AVISO", warn1: "Temas de isolamento e terror psicológico. Fones recomendados.", btnAccept: "DESPERTAR",
+                    menuTitle: "O LIMIAR DAS CINZAS", btnCont: "Continuar", btnNew: "Novo Jogo", btnSet: "Configurações",
+                    setTitle: "Configurações", setLang: "Idioma", setDrone: "Som Ambiente", setReset: "Resetar Dados", btnReset: "RESETAR", btnBack: "Voltar", setDonate: "Apoiar", btnDonate: "PAYPAL",
+                    sFire: "Chama", sSan: "Mente", sWood: "Madeira",
+                    btnGather: "Coletar", btnFire: "Alimentar (3)", btnExp: "Desbravar (15)", btnTalk: "Interagir",
+                    endHead: "FIM DO CICLO", btnRestart: "Renascer",
+                    btnReady: "ESTOU PRONTO", txtOn: "LIG.", txtOff: "DESL.", txtWait: "ESPERE...", txtNow: "AGORA!",
+                    archTitle: "O ACERVO", archMem: "Memórias", archArt: "Artefatos", archLor: "Lore", btnClose: "Fechar", archBtn: "[ ACERVO ]",
+                    notifMem: "Nova Página de Diário!", notifArt: "Novo Artefato Encontrado!", notifLor: "Nova Lore Descoberta!", dialTitle: "Interação",
+                    cMeat: "Carne", cAsh: "Cinzas", cPop: "Devotos",
+                    bTrap: "Armadilha", bTent: "Abrigo", bTotem: "Santuário",
+                    jGath: "Vasculhadores", jTrap: "Caçadores", jKeep: "Guardiões"
+                },
+                archive: {
+                    mem: [
+                        { t: "Dia 1 antes da Calada", d: "A vida era normal. Eu tinha uma família. O céu era azul." },
+                        { t: "A Queda", d: "O céu ficou cinza. O silêncio sem fim começou." },
+                        { t: "A Despedida", d: "Todos sumiram. Fiquei inteiramente só." },
+                        { t: "O Desvanecer", d: "Eu já não consigo lembrar do meu próprio rosto." },
+                        { t: "O Frio", d: "Não é apenas temperatura. É a ausência de vida." },
+                        { t: "Os Sussurros", d: "Eles não vêm das árvores, vêm de dentro da minha cabeça." },
+                        { t: "A Sombra", d: "Vi algo se movendo onde a luz não alcança." },
+                        { t: "A Aceitação", d: "Talvez eu pertença a este lugar agora." }
+                    ],
+                    art: [
+                        { t: "Rádio Morto", d: "Ele transmite o som de uma respiração constante, mesmo sem bateria." },
+                        { t: "Relógio Derretido", d: "Os ponteiros giram para trás rápido quando não estou olhando." },
+                        { t: "Pingente de Cinzas", d: "Tem o formato de um olho fechado feito de pó comprimido." },
+                        { t: "Faca Enferrujada", d: "O sangue na lâmina nunca parece secar." },
+                        { t: "Boneca Queimada", d: "Um brinquedo derretido. Lembra alguém que perdi." },
+                        { t: "Espelho Estilhaçado", d: "Não reflete meu rosto, apenas as chamas." },
+                        { t: "Caixa de Fósforos", d: "Vazia. O papel está manchado com um líquido negro." },
+                        { t: "Retrato Sem Rosto", d: "Uma foto velha, mas o rosto foi violentamente raspado." }
+                    ],
+                    lor: [
+                        { t: "A Regra do Fogo", d: "O fogo não aquece o corpo físico, ele queima as sombras da mente." },
+                        { t: "O Limiar", d: "Este lugar não é uma floresta. É um estômago cósmico digerindo a realidade." },
+                        { t: "A Mulher", d: "Ela não é uma sobrevivente. Ela é a isca... ou a carcereira?" },
+                        { t: "O Ciclo", d: "Mil batidas do coração. Mil fagulhas. Então o mundo reinicia." },
+                        { t: "O Devorador", d: "O Limiar se alimenta de arrependimentos. A chama é sua indigestão." },
+                        { t: "Os Ecos", d: "As vozes que ouço são de outros que falharam em manter a chama acesa." },
+                        { t: "O Pacto", d: "Ela não fala, pois a voz dela foi o preço pago para existir aqui." },
+                        { t: "A Fuga", d: "O ciclo não pode ser quebrado à força, apenas transcendido pela memória." }
+                    ]
+                },
+                dialogues: [
+                    {
+                        desc: "Ela está desenhando círculos nas cinzas com um graveto.",
+                        opts: [{ t: "Perguntar o que ela desenha.", r: "win", rep: "Ela aponta para o fogo e depois para você. Uma faísca de conexão." }, { t: "Apagar o desenho.", r: "fail", rep: "Ela recua aterrorizada. Você quebrou a confiança." }, { t: "Desenhar junto com ela.", r: "win", rep: "Ela sorri de leve. A escuridão recua." }]
+                    },
+                    {
+                        desc: "Ela chora silenciosamente, cobrindo o rosto sujo de fuligem.",
+                        opts: [{ t: "Perguntar o nome dela.", r: "neutral", rep: "Ela balança a cabeça. Nomes são esquecidos aqui." }, { t: "Abraçá-la.", r: "win", rep: "Ela treme, mas aceita o calor. O frio diminui." }, { t: "Ignorar e focar no fogo.", r: "fail", rep: "O choro dela se torna um eco constante na sua mente." }]
+                    },
+                    {
+                        desc: "Ela está olhando fixamente para a floresta, vendo algo oculto.",
+                        opts: [{ t: "Olhar para onde ela olha.", r: "fail", rep: "Sombras dançam. Sua mente dói ao tentar compreender o vazio." }, { t: "Bloquear a visão dela.", r: "win", rep: "Ela pisca, voltando à realidade, e parece aliviada." }, { t: "Jogar um galho na escuridão.", r: "neutral", rep: "O galho é engolido sem som. Ela suspira." }]
+                    },
+                    {
+                        desc: "Ela treme violentamente por causa do frio não natural.",
+                        opts: [{ t: "Dar sua madeira para ela.", r: "neutral", rep: "Ela alimenta o fogo. O tremor para brevemente." }, { t: "Segurar as mãos dela.", r: "win", rep: "A pele dela é gelo, mas o calor compartilhado ajuda." }, { t: "Se afastar dela.", r: "fail", rep: "Ela percebe seu nojo e se encolhe ainda mais." }]
+                    },
+                    {
+                        desc: "Ela tosse bruscamente uma gosma negra de cinzas, sufocando.",
+                        opts: [{ t: "Forçar a boca dela aberta.", r: "neutral", rep: "Você arranca a fuligem. Ela respira, mas os lábios sangram." }, { t: "Desviar o olhar.", r: "fail", rep: "O som de engasgo perfura a sua consciência." }, { t: "Segurar o rosto dela.", r: "win", rep: "O ataque para e ela agarra sua roupa, arfando aliviada." }]
+                    },
+                    {
+                        desc: "Ela se levanta em modo catatônico e marcha para o breu.",
+                        opts: [{ t: "Agarrar seu braço.", r: "win", rep: "Ela desperta do transe, recuando do escuro em pânico." }, { t: "Deixá-la caminhar.", r: "fail", rep: "Ela some na névoa antes de rastejar de volta, chorando." }, { t: "Gritar para o vazio.", r: "fail", rep: "As sombras o encaram de volta. Uma náusea brutal preenche a mente." }]
+                    },
+                    {
+                        desc: "Com as juntas sangrando, ela arranha símbolos na própria carne.",
+                        opts: [{ t: "Parar as mãos dela.", r: "win", rep: "Ela luta, mas depois cede exausta. Uma paz terrível." }, { t: "Limpar o sangue.", r: "neutral", rep: "As feridas persistem, mas a inscrição perde a forma." }, { t: "Encarar o símbolo.", r: "fail", rep: "Sua percepção dobra sobre si mesma tentando ler o idioleto maldito." }]
+                    }
+                ],
+                textVars: { gather: ["Você junta gravetos da terra.", "Mais madeira morta para o fogo."], gatherLore: ["O solo pareceu suspirar.", "O galho pulsou na sua mão."], fire: ["A chama se ergue.", "O fogo crepita faminto."], fireFail: ["Faltam gravetos.", "O fogo recusa."], explore: ["Você avança nas sombras.", "O vazio engole seus passos."], exploreFail: ["Escuridão total. O fogo deve estar mais forte."], draining: ["O frio despedaça seus pensamentos.", "Uma angústia aperta seu peito."], intWin: ["Um raro conforto no abismo.", "Você lembra que não está sozinho."], intFail: ["Ela desvia o olhar.", "O pânico toma conta."], ambientHorror: ["Algo respira na sua nuca.", "Vultos dançam no canto do seu olho.", "Um galho estala no escuro. Perto demais.", "Você escuta um zumbido baixo que não é seu.", "O frio tem o toque de mãos mortas nos seus ombros."],
+                cultNew: ["Um vulto se ajoelha na beira do fogo e olha para ela.", "Uma alma partida implora por abrigo.", "Mais um par de olhos vazios passou a protegê-la."], cultStarve: ["Um devoto delirou de fome e a escuridão o levou.", "A fome cobrou sua dívida.", "Eles partiram sussurrando pragas."], cultRaid: ["Algo imenso roubou nossa carne do escuro.", "As sombras investiram contra o acampamento.", "Uma armadilha foi estilhaçada."] },
+                milestones: { 10: { text: "Ela teme a própria sombra.", type: "woman" }, 100: { text: "O fogo emite memórias.", type: "lore" }, 900: { text: "O fim é iminente.", type: "lore" } },
+                finals: {
+                    forgotten: { title: "O ESQUECIMENTO", type: "Loucura", desc: "Você virou uma árvore muda." },
+                    demo: { title: "FIM DA DEMONSTRAÇÃO", type: "Tempo Esgotado", desc: "Você sobreviveu por 30 minutos! Obrigado por jogar a demo. Apoie o criador se quiser ver o jogo completo." }
+                },
+                mg: { syncT: "Sincronia", syncD: "Pare o cursor no centro.", btnSync: "SINCRONIZAR", resT: "Resistência", resD: "Pânico! Clique rápido.", btnRes: "AFASTAR", refT: "Percepção", refD: "Espere o brilho BRANCO e clique.", focT: "Foco", focD: "Acerte o alvo rápido 2 vezes.", btnFoc: "FOCAR", equT: "Equilíbrio", equD: "Toque rítmico. Mantenha no centro.", btnEqu: "ESTABILIZAR", preT: "Precisão", preD: "O cursor revoará. Golpeie exato no centro: apenas 1 vez.", btnPre: "GOLPEAR" }
+            },
+            es: {
+                ui: {
+                    warnTitle: "ADVERTENCIA", warn1: "Temas de aislamiento y deterioro mental. Usa auriculares.", btnAccept: "DESPERTAR",
+                    menuTitle: "EL UMBRAL DE CENIZAS", btnCont: "Continuar", btnNew: "Nuevo Juego", btnSet: "Ajustes",
+                    setTitle: "Ajustes", setLang: "Idioma", setDrone: "Sonido Ambiente", setReset: "Borrar Datos", btnReset: "BORRAR", btnBack: "Volver", setDonate: "Apoyar", btnDonate: "PAYPAL",
+                    sFire: "Llama", sSan: "Cordura", sWood: "Madera",
+                    btnGather: "Recolectar", btnFire: "Avivar (3)", btnExp: "Explorar (15)", btnTalk: "Interactuar",
+                    endHead: "FIN DEL CICLO", btnRestart: "Renacer",
+                    btnReady: "ESTOY LISTO", txtOn: "SÍ", txtOff: "NO", txtWait: "ESPERA...", txtNow: "¡AHORA!",
+                    archTitle: "EL ARCHIVO", archMem: "Memorias", archArt: "Artefactos", archLor: "Lore", btnClose: "Cerrar", archBtn: "[ ARCHIVO ]",
+                    notifMem: "¡Página de diario encontrada!", notifArt: "¡Nuevo artefacto!", notifLor: "¡Conocimiento revelado!", dialTitle: "Interacción",
+                    cMeat: "Carne", cAsh: "Cenizas", cPop: "Devotos",
+                    bTrap: "Trampa", bTent: "Refugio", bTotem: "Santuario",
+                    jGath: "Buscadores", jTrap: "Cazadores", jKeep: "Guardianes"
+                },
+                archive: {
+                    mem: [
+                        { t: "Día 1 antes del Silencio", d: "La vida era normal. Tenía familia. El cielo era azul." },
+                        { t: "La Caída", d: "El cielo se volvió gris. El silencio comenzó." },
+                        { t: "La Despedida", d: "Todos desaparecieron. Me quedé solo." },
+                        { t: "El Desvanecimiento", d: "Ya no puedo recordar mi rostro." },
+                        { t: "El Frío", d: "No es solo temperatura. Es la ausencia de vida." },
+                        { t: "Los Susurros", d: "No vienen de los árboles, vienen de mi cabeza." },
+                        { t: "La Sombra", d: "Vi algo moverse donde no llega la luz." },
+                        { t: "La Aceptación", d: "Quizás pertenezca a este lugar ahora." }
+                    ],
+                    art: [
+                        { t: "Radio Muerta", d: "Transmite respiración sin baterías." },
+                        { t: "Reloj Derretido", d: "Las manecillas giran hacia atrás si no miro." },
+                        { t: "Colgante de Cenizas", d: "Forma de ojo cerrado." },
+                        { t: "Cuchillo Oxidado", d: "La sangre en la hoja nunca se seca." },
+                        { t: "Muñeca Quemada", d: "Un juguete derretido. Me recuerda a alguien." },
+                        { t: "Espejo Roto", d: "No refleja mi rostro, solo las llamas." },
+                        { t: "Caja de Fósforos", d: "El papel está manchado con un líquido negro." },
+                        { t: "Retrato Sin Rostro", d: "El rostro fue rascado violentamente." }
+                    ],
+                    lor: [
+                        { t: "La Regla del Fuego", d: "El fuego no calienta, quema las sombras de la mente." },
+                        { t: "El Umbral", d: "Un estómago cósmico digiriendo la realidad." },
+                        { t: "La Mujer", d: "No es una sobreviviente. ¿Es el cebo o la carcelera?" },
+                        { t: "El Ciclo", d: "Mil latidos. Mil chispas. El mundo se reinicia." },
+                        { t: "El Devorador", d: "El Umbral se alimenta de arrepentimientos." },
+                        { t: "Los Ecos", d: "Las voces son de otros que fallaron al mantener la llama." },
+                        { t: "El Pacto", d: "Su voz fue el precio que pagó para existir aquí." },
+                        { t: "El Escape", d: "El ciclo no se puede romper a la fuerza, solo trascender." }
+                    ]
+                },
+                dialogues: [
+                    {
+                        desc: "Ella dibuja círculos en las cenizas con una rama.",
+                        opts: [{ t: "Preguntar qué dibuja.", r: "win", rep: "Señala el fuego y luego a ti. Una chispa de conexión." }, { t: "Borrar el dibujo.", r: "fail", rep: "Retrocede aterrorizada. Rompiste su confianza." }, { t: "Dibujar junto a ella.", r: "win", rep: "Sonríe levemente. La oscuridad retrocede." }]
+                    },
+                    {
+                        desc: "Llora en silencio, cubriendo su rostro manchado de hollín.",
+                        opts: [{ t: "Preguntar su nombre.", r: "neutral", rep: "Niega con la cabeza. Los nombres se olvidan aquí." }, { t: "Abrazarla.", r: "win", rep: "Tiembla, pero acepta el calor." }, { t: "Ignorar y ver el fuego.", r: "fail", rep: "Su llanto se vuelve un eco constante en tu mente." }]
+                    },
+                    {
+                        desc: "Mira fijamente el bosque, viendo algo oculto.",
+                        opts: [{ t: "Mirar a donde ella mira.", r: "fail", rep: "Las sombras bailan. Tu mente duele al intentar comprender." }, { t: "Bloquear su vista.", r: "win", rep: "Parpadea, volviendo a la realidad, aliviada." }, { t: "Lanzar una rama a la oscuridad.", r: "neutral", rep: "La rama es tragada sin sonido. Ella suspira." }]
+                    },
+                    {
+                        desc: "Tiembla violentamente por el frío sobrenatural.",
+                        opts: [{ t: "Darle tu madera.", r: "neutral", rep: "Alimenta el fuego. El temblor se detiene brevemente." }, { t: "Sostener sus manos.", r: "win", rep: "Su piel es hielo, pero el calor compartido ayuda." }, { t: "Alejarse de ella.", r: "fail", rep: "Nota tu repulsión y se encoge más." }]
+                    },
+                    {
+                        desc: "Sufre accesos de tos con una baba asfixiante de cenizas.",
+                        opts: [{ t: "Forzar su boca a abrirse.", r: "neutral", rep: "Extraes el hollín. Respira, pero sus labios sangran." }, { t: "Apartar la mirada.", r: "fail", rep: "El sonido de su asfixia taladra tu mente." }, { t: "Sostener su rostro.", r: "win", rep: "El ataque cesa. Ella se aferra a tu abrigo con alivio." }]
+                    },
+                    {
+                        desc: "Se levanta catatónica y camina directamente hacia el vacío.",
+                        opts: [{ t: "Tomar su brazo.", r: "win", rep: "Despierta del trance, retrocediendo aterrada de la oscuridad." }, { t: "Dejar que marche sola.", r: "fail", rep: "Desaparece unos segundos y regresa arrastrándose en llanto." }, { t: "Gritarle al abismo.", r: "fail", rep: "La sombra te mira fijamente. Una fuerte náusea te derriba." }]
+                    },
+                    {
+                        desc: "Usa sus nudillos rotos para rasparse símbolos en la piel.",
+                        opts: [{ t: "Detener sus manos.", r: "win", rep: "Implora, luego cae exhausta. Una paz lúgubre." }, { t: "Limpiar la sangre.", r: "neutral", rep: "Quedan las llagas, pero el símbolo desaparece." }, { t: "Tratar de leerlo.", r: "fail", rep: "Tu psique se deforma intentando comprender el idioma blasfemo." }]
+                    }
+                ],
+                textVars: { gather: ["Recoges madera seca."], gatherLore: ["El suelo suspiró."], fire: ["La llama consume."], fireFail: ["Faltan ramas."], explore: ["Avanzas al vacío."], exploreFail: ["Oscuridad impenetrable."], draining: ["El frío destroza tus pensamientos."], intWin: ["Un raro consuelo."], intFail: ["Ella desvía la mirada."], ambientHorror: ["Algo respira en tu nuca.", "Sombras bailan en el rabillo de tu ojo.", "Una rama se quiebra en la oscuridad. Muy cerca.", "Escuchas un zumbido bajo que no es tuyo.", "El frío se siente como manos muertas sobre ti."],
+                cultNew: ["Una figura se arrodilla ante el fuego, mirándola.", "Un alma perdida suplica quedarse.", "Otro par de ojos huecos la protege."], cultStarve: ["Un devoto murió de hambre.", "El hambre cobró su peaje.", "Se fueron, maldiciéndola."], cultRaid: ["Algo oscuro robó la carne.", "Las sombras atacaron el refugio.", "Una trampa fue destruida."] },
+                milestones: { 10: { text: "Ella teme a su propia sombra.", type: "woman" }, 100: { text: "El fuego emite recuerdos.", type: "lore" }, 900: { text: "El fin es inminente.", type: "lore" } },
+                finals: {
+                    forgotten: { title: "EL OLVIDO", type: "Locura", desc: "Te convertiste en un árbol mudo." },
+                    demo: { title: "FIN DE LA DEMO", type: "Tiempo Agotado", desc: "¡Has sobrevivido 30 minutos! Gracias por jugar la demo. Apoya al creador si quieres ver el juego completo." }
+                },
+                mg: { syncT: "Sincronía", syncD: "Detén el cursor en el centro.", btnSync: "SINCRONIZAR", resT: "Resistencia", resD: "¡Pánico! Clic rápido.", btnRes: "LUCHAR", refT: "Percepción", refD: "Espera el destello BLANCO.", focT: "Enfoque", focD: "Acierta 2 veces.", btnFoc: "ENFOCAR", equT: "Equilibrio", equD: "Toques rítmicos. Mantén el centro.", btnEqu: "ESTABILIZAR", preT: "Precisión", preD: "Golpe exacto en el centro. Solo tienes una bala.", btnPre: "ATACAR" }
+            }
+        };
+
+        function t(key) { return LANG_DATA[engine.currentLang].ui[key]; }
+        function getRndText(arrKey) { const arr = LANG_DATA[engine.currentLang].textVars[arrKey]; return arr[Math.floor(Math.random() * arr.length)]; }
+
+        // =========================================
+        // MOTOR DO JOGO
+        // =========================================
+        const engine = {
+            clicks: 0, wood: 0, fire: 0, sanity: 100, active: false,
+            meat: 0, ashes: 0, pop: 0, popIdle: 0, buildings: { trap: 0, tent: 0, totem: 0 }, jobs: { gatherer: 0, trapper: 0, keeper: 0 }, flags: { campUnlocked: false, popUnlocked: false },
+            gatherCooldown: false, interactionReady: false, totalExplored: 0,
+            mgActive: false, mgCurrent: '', mgCursorPos: 0, mgDirection: 1, mgAnimFrame: null, mgState: {}, mgResolving: false,
+            droneEnabled: true, currentLang: 'en', audioCtx: null, droneNode: null, fireNode: null,
+
+            archiveProgress: { mem: 0, art: 0, lor: 0 },
+            archivePity: { mem: 0, art: 0, lor: 0 },
+            currentDialogue: null,
+            timePlayed: 0,
+            lastTickTime: 0,
+
+            init() {
+                this.createAsh(); this.loadMeta(); this.updateTexts(); this.updateUI();
+
+                document.getElementById('warning-screen').style.display = 'flex';
+                document.getElementById('btn-accept').addEventListener('click', () => { document.getElementById('warning-screen').style.display = 'none'; this.setupAudio(); this.switchScreen('menu-screen'); });
+                document.getElementById('btn-new-game').addEventListener('click', () => this.startNewGame());
+                document.getElementById('btn-continue').addEventListener('click', () => this.continueGame());
+                document.getElementById('btn-settings-open').addEventListener('click', () => this.switchScreen('settings-screen'));
+                document.getElementById('btn-settings-close').addEventListener('click', () => this.switchScreen('menu-screen'));
+                document.getElementById('btn-toggle-drone').addEventListener('click', () => this.toggleDrone());
+                document.getElementById('btn-reset-all').addEventListener('click', () => this.resetAllProgress());
+                document.getElementById('lang-select').addEventListener('change', (e) => this.changeLanguage(e.target.value));
+                document.getElementById('btn-donate').addEventListener('click', () => window.open('https://www.paypal.com/donate/?business=nicolasrochasantos9@gmail.com', '_blank'));
+
+                document.getElementById('btn-gather').addEventListener('click', () => this.act('gather'));
+                document.getElementById('btn-fire').addEventListener('click', () => this.act('fire'));
+                document.getElementById('btn-explore').addEventListener('click', () => this.act('explore'));
+                document.getElementById('btn-talk').addEventListener('click', () => this.interactDecision());
+                document.getElementById('btn-mg-action').addEventListener('click', () => this.checkMinigame());
+                document.getElementById('game-menu-icon').addEventListener('click', () => { this.saveGame(); this.switchScreen('menu-screen'); });
+                document.getElementById('btn-end-restart').addEventListener('click', () => this.switchScreen('menu-screen'));
+
+                document.getElementById('btn-open-archive').addEventListener('click', () => { this.saveGame(); this.switchScreen('archive-screen'); this.renderArchive('mem'); });
+
+                this.lastTickTime = Date.now();
+                setInterval(() => this.tick(), 3000);
+            },
+
+            createAsh() {
+                const container = document.getElementById('ash-container');
+                for (let i = 0; i < 30; i++) {
+                    const ash = document.createElement('div'); ash.className = 'ash-particle';
+                    const size = Math.random() * 3 + 1; ash.style.width = size + 'px'; ash.style.height = size + 'px';
+                    ash.style.left = Math.random() * 100 + 'vw'; ash.style.animationDuration = (Math.random() * 5 + 5) + 's'; ash.style.animationDelay = Math.random() * 5 + 's';
+                    container.appendChild(ash);
+                }
+            },
+
+            showNotification(icon, title, desc) {
+                document.getElementById('notif-icon').innerText = icon; document.getElementById('notif-title').innerText = title; document.getElementById('notif-desc').innerText = desc;
+                const el = document.getElementById('ui-notification'); el.classList.add('show'); setTimeout(() => el.classList.remove('show'), 4000);
+            },
+
+            changeLanguage(lang) { this.currentLang = lang; this.saveMeta(); this.updateTexts(); this.updateUI(); },
+
+            updateTexts() {
+                const uiFields = ['warnTitle', 'warn1', 'btnAccept', 'menuTitle', 'btnCont', 'btnNew', 'btnSet', 'setTitle', 'setLang', 'setDrone', 'setReset', 'btnReset', 'setDonate', 'btnDonate', 'btnBack', 'sFire', 'sSan', 'sWood', 'btnGather', 'btnFire', 'btnExp', 'endHead', 'archTitle', 'archMem', 'archArt', 'archLor', 'btnClose', 'archBtn', 'dialTitle'];
+                uiFields.forEach(k => { if (document.getElementById('ui-' + k)) document.getElementById('ui-' + k).innerText = t(k); });
+                document.getElementById('btn-continue').innerText = t('btnCont'); document.getElementById('btn-new-game').innerText = t('btnNew'); document.getElementById('btn-settings-open').innerText = t('btnSet');
+                document.getElementById('btn-reset-all').innerText = t('btnReset'); document.getElementById('btn-donate').innerText = t('btnDonate'); document.getElementById('btn-settings-close').innerText = t('btnBack');
+                document.getElementById('btn-gather').innerText = t('btnGather'); document.getElementById('btn-fire').innerText = t('btnFire'); document.getElementById('btn-explore').innerText = t('btnExp');
+                document.getElementById('btn-toggle-drone').innerText = this.droneEnabled ? t('txtOn') : t('txtOff');
+                document.getElementById('btn-open-archive').innerText = t('archBtn');
+                document.getElementById('ui-tab-mem').innerText = t('archMem'); document.getElementById('ui-tab-art').innerText = t('archArt'); document.getElementById('ui-tab-lor').innerText = t('archLor');
+                if (!this.interactionReady) document.getElementById('btn-talk').innerText = t('btnTalk');
+            },
+
+            // =====================================
+            // ÁUDIO AJUSTADO (V4.3)
+            // =====================================
+            setupAudio() { if (this.audioCtx) return; this.audioCtx = new (window.AudioContext || window.webkitAudioContext)(); this.startDroneSound(); this.startFireSound(); this.updateAudioVolumes(); },
+
+            startDroneSound() {
+                this.droneNode = this.audioCtx.createGain(); this.droneNode.gain.setValueAtTime(0, this.audioCtx.currentTime); // Inicia mutado
+                for (let i = 0; i < 4; i++) {
+                    const osc = this.audioCtx.createOscillator(); const oscGain = this.audioCtx.createGain();
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(40 + (Math.random() * 2), this.audioCtx.currentTime);
+                    const lfo = this.audioCtx.createOscillator(); lfo.type = 'sine'; lfo.frequency.setValueAtTime(0.1 + (Math.random() * 0.1), this.audioCtx.currentTime);
+                    const lfoGain = this.audioCtx.createGain(); lfoGain.gain.setValueAtTime(0.005, this.audioCtx.currentTime);
+                    lfo.connect(lfoGain); lfoGain.connect(oscGain.gain); lfo.start(); osc.connect(oscGain); oscGain.connect(this.droneNode); osc.start();
+                }
+                this.droneNode.connect(this.audioCtx.destination);
+            },
+
+            startFireSound() {
+                const bufferSize = this.audioCtx.sampleRate * 2; const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate); const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+                const noise = this.audioCtx.createBufferSource(); noise.buffer = buffer; noise.loop = true;
+                this.fireNode = this.audioCtx.createGain(); this.fireNode.gain.setValueAtTime(0, this.audioCtx.currentTime); // Inicia mutado
+                const filter = this.audioCtx.createBiquadFilter(); filter.type = "bandpass"; filter.frequency.setValueAtTime(1000, this.audioCtx.currentTime);
+                noise.connect(filter); filter.connect(this.fireNode); this.fireNode.connect(this.audioCtx.destination); noise.start();
+            },
+
+            // FUNÇÃO MESTRA DE CONTROLE DE ÁUDIO
+            updateAudioVolumes() {
+                if (!this.audioCtx) return;
+                const now = this.audioCtx.currentTime;
+
+                // Drone: Toca bem baixo (0.01) apenas se ativado E se o jogador estiver na tela do jogo
+                if (this.droneNode) {
+                    const targetDrone = (this.active && this.droneEnabled) ? 0.01 : 0;
+                    this.droneNode.gain.linearRampToValueAtTime(targetDrone, now + 1);
+                }
+
+                // Fogo: Toca apenas na tela do jogo. O volume varia de 0 até 0.015 dependendo do tamanho da chama (this.fire de 0 a 120)
+                if (this.fireNode) {
+                    const targetFire = this.active ? (this.fire / 120) * 0.015 : 0;
+                    this.fireNode.gain.linearRampToValueAtTime(targetFire, now + 1);
+                }
+            },
+
+            playClickSound() {
+                if (!this.audioCtx || !this.droneEnabled) return; const osc = this.audioCtx.createOscillator(); const gain = this.audioCtx.createGain();
+                osc.type = 'triangle'; osc.frequency.setValueAtTime(300 + Math.random() * 50, this.audioCtx.currentTime); gain.gain.setValueAtTime(0.01, this.audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.1);
+                osc.connect(gain); gain.connect(this.audioCtx.destination); osc.start(); osc.stop(this.audioCtx.currentTime + 0.1);
+            },
+
+            // =====================================
+            // LÓGICA CORE
+            // =====================================
+            switchScreen(screenId) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById('game-screen').classList.remove('active');
+                if (screenId === 'game-screen') { document.getElementById('game-screen').classList.add('active'); this.active = true; } else { document.getElementById(screenId).classList.add('active'); this.active = false; }
+                this.updateUI();
+                this.updateAudioVolumes(); // Desliga o som ao sair do jogo e liga ao voltar
+            },
+
+            startNewGame() {
+                if (localStorage.getItem('silentWoodSave') && !confirm(this.currentLang === 'pt' ? "Tem certeza?" : "Are you sure?")) return;
+                this.clearGameSave(); this.clicks = 0; this.wood = 0; this.fire = 0; this.sanity = 100; this.active = true; this.interactionReady = false; this.totalExplored = 0; document.getElementById('log').innerHTML = '';
+                this.meat = 0; this.ashes = 0; this.pop = 0; this.popIdle = 0; this.buildings = { trap: 0, tent: 0, totem: 0 }; this.jobs = { gatherer: 0, trapper: 0, keeper: 0 }; this.flags = { campUnlocked: false, popUnlocked: false };
+                this.timePlayed = 0; this.lastTickTime = Date.now();
+                this.archivePity = { mem: 0, art: 0, lor: 0 };
+                this.switchScreen('game-screen');
+                const introTxt = this.currentLang === 'pt' ? "O Limiar te recebe. O tempo aqui é uma ferida aberta." : (this.currentLang === 'es' ? "El Umbral te recibe. El tiempo aquí es una herida abierta." : "The Threshold welcomes you. Time here is an open wound.");
+                this.log(introTxt, "lore"); this.saveGame();
+            },
+
+            continueGame() {
+                if (this.loadGame()) {
+                    this.lastTickTime = Date.now();
+                    this.switchScreen('game-screen');
+                    const recTxt = this.currentLang === 'pt' ? "Você acordou nas cinzas..." : (this.currentLang === 'es' ? "Despertaste en las cenizas..." : "You woke up in the ashes...");
+                    this.log(recTxt, "lore");
+                }
+            },
+
+            tryDropArchive(type) {
+                const max = 8; if (this.archiveProgress[type] >= max) return;
+                const baseChance = { mem: 0.05, art: 0.10, lor: 0.25 }[type];
+                const chance = baseChance + (this.archivePity[type] * 0.03);
+
+                if (Math.random() < chance) {
+                    this.archivePity[type] = 0;
+                    const id = this.archiveProgress[type]; this.archiveProgress[type]++; this.saveMeta();
+                    const titleUI = type === 'mem' ? t('notifMem') : (type === 'art' ? t('notifArt') : t('notifLor'));
+                    const icon = type === 'mem' ? '📓' : (type === 'art' ? '🕰️' : '👁️');
+                    const itemName = LANG_DATA[this.currentLang].archive[type][id].t;
+                    this.showNotification(icon, titleUI, itemName); this.log(`<b>[ ${titleUI.toUpperCase()} ]</b>`, "event");
+                } else {
+                    this.archivePity[type]++;
+                }
+            },
+
+            act(type) {
+                if (!this.active || this.mgActive) return;
+                if (type === 'gather' && this.gatherCooldown) return;
+                this.playClickSound(); this.clicks++;
+
+                const ms = LANG_DATA[this.currentLang].milestones[this.clicks]; if (ms) this.log(`[>>] ${ms.text}`, ms.type);
+
+                switch (type) {
+                    case 'gather':
+                        this.startGatherCooldown(); this.wood += Math.floor(Math.random() * 3) + 1;
+                        this.log(getRndText('gather'), "lore"); if (this.clicks > 50 && Math.random() > 0.85) this.log(getRndText('gatherLore'), "forest");
+                        this.tryDropArchive('mem');
+                        break;
+                    case 'fire':
+                        if (this.wood >= 3) { this.wood -= 3; this.fire = Math.min(this.fire + 30, 120); this.log(getRndText('fire'), "lore"); } else { this.log(getRndText('fireFail'), "lore"); }
+                        break;
+                    case 'explore':
+                        if (this.fire >= 15) {
+                            this.fire -= 15; this.sanity -= 5; this.totalExplored++; this.log(getRndText('explore'), "lore");
+                            this.tryDropArchive('art');
+                        } else {
+                            this.log(getRndText('exploreFail'), "forest"); document.body.classList.add('screenshake'); setTimeout(() => document.body.classList.remove('screenshake'), 400);
+                        }
+                        break;
+                }
+                this.saveGame(); this.updateUI();
+            },
+
+            startGatherCooldown() {
+                this.gatherCooldown = true; const btn = document.getElementById('btn-gather'); btn.disabled = true; btn.classList.add('on-cooldown');
+                setTimeout(() => { this.gatherCooldown = false; btn.disabled = false; btn.classList.remove('on-cooldown'); }, 3000);
+            },
+
+            buildCamp(type) {
+                if(type === 'trap' && this.wood >= 20) { this.wood -= 20; this.buildings.trap++; }
+                else if(type === 'tent' && this.wood >= 50 && this.meat >= 10) { this.wood -= 50; this.meat -= 10; this.buildings.tent++; }
+                else if(type === 'totem' && this.wood >= 100 && this.ashes >= 50) { this.wood -= 100; this.ashes -= 50; this.buildings.totem++; }
+                else { this.log(getRndText('fireFail'), "forest"); }
+                this.updateUI(); this.saveGame();
+            },
+
+            adjJob(type, diff) {
+                if(diff > 0) {
+                    if(this.popIdle > 0) {
+                        this.popIdle--; this.jobs[type]++;
+                    }
+                } else if(diff < 0) {
+                    if(this.jobs[type] > 0) {
+                        this.jobs[type]--; this.popIdle++;
+                    }
+                }
+                this.updateUI(); this.saveGame();
+            },
+
+            tick() {
+                if (!this.active || this.mgActive) {
+                    this.lastTickTime = Date.now();
+                    return;
+                }
+
+                const now = Date.now();
+                const deltaSecs = (now - this.lastTickTime) / 1000;
+                this.lastTickTime = now;
+                const intervals = Math.max(1, Math.floor(deltaSecs / 3));
+
+                this.timePlayed += 3 * intervals;
+
+                if (!this.interactionReady && this.clicks > 30 && Math.random() > 0.8) {
+                    this.interactionReady = true; this.log(this.currentLang === 'pt' ? "Ela olha na sua direção." : "She looks in your direction.", "woman");
+                }
+
+                if(!this.flags.campUnlocked && this.wood >= 30) {
+                    this.flags.campUnlocked = true;
+                    this.updateUI();
+                }
+
+                if(this.flags.campUnlocked) {
+                    let gatherGen = this.jobs.gatherer * 0.4 * deltaSecs;
+                    let trapGen = this.jobs.trapper * (this.buildings.trap > 0 ? 0.2 : 0) * deltaSecs;
+                    let ashGen = this.buildings.totem * 0.1 * deltaSecs;
+                    this.wood += gatherGen; this.meat += trapGen; this.ashes += ashGen;
+
+                    let popConsumption = this.pop * 0.05 * deltaSecs;
+                    this.meat -= popConsumption;
+                    
+                    if(this.meat < 0) {
+                        let starved = Math.min(this.pop, Math.floor(Math.abs(this.meat) / 10) + 1);
+                        this.meat = 0;
+                        if(this.pop > 0 && Math.random() < 0.2 * deltaSecs) { // Risco de morrer por fome
+                            this.pop -= starved;
+                            for(let i=0; i<starved; i++) {
+                                if(this.popIdle > 0) this.popIdle--;
+                                else if(this.jobs.gatherer > 0) this.jobs.gatherer--;
+                                else if(this.jobs.trapper > 0) this.jobs.trapper--;
+                                else if(this.jobs.keeper > 0) this.jobs.keeper--;
+                            }
+                            this.sanity -= (5 * starved);
+                            this.log(getRndText('cultStarve'), "forest");
+                        }
+                    }
+
+                    let maxPop = this.buildings.tent * 2;
+                    if(this.pop < maxPop && this.meat >= 5 && Math.random() < 0.05 * deltaSecs) {
+                        this.meat -= 5; this.pop++; this.popIdle++;
+                        this.log(getRndText('cultNew'), "event");
+                        this.sanity -= 2; // Custo mental
+                    }
+
+                    let fireKeepers = this.jobs.keeper;
+                    if (fireKeepers > 0 && this.fire < 30) {
+                        let woodNeeded = fireKeepers * 1.5 * deltaSecs;
+                        let fireBoost = fireKeepers * 2.0 * deltaSecs;
+                        if(this.wood >= woodNeeded) {
+                            this.wood -= woodNeeded;
+                            this.fire = Math.min(this.fire + fireBoost, 100);
+                        } else if(this.wood > 0) {
+                            this.fire = Math.min(this.fire + (this.wood * 1.33), 100);
+                            this.wood = 0;
+                        }
+                    }
+
+                    if(deltaSecs < 10 && this.meat >= 20 && Math.random() < 0.005) {
+                        this.meat -= 10;
+                        if(this.buildings.trap > 0) this.buildings.trap--;
+                        this.log(getRndText('cultRaid'), "forest");
+                        document.body.classList.add('screenshake'); setTimeout(() => document.body.classList.remove('screenshake'), 400);
+                    }
+                }
+
+                this.sanity -= 0.1 * intervals;
+                if (this.pop > 0) { this.sanity -= (this.pop * 0.05 * deltaSecs); }
+
+                if (this.fire > 0) {
+                    this.fire = Math.max(0, this.fire - (1 * intervals));
+                }
+                
+                if (this.fire <= 0) {
+                    this.sanity -= 0.5 * intervals;
+                    if (Math.random() > 0.7) this.log(getRndText('draining'), "forest");
+                    if (this.sanity < 50) { document.getElementById('game-screen').classList.add('damage-flash'); setTimeout(() => document.getElementById('game-screen').classList.remove('damage-flash'), 300); }
+                }
+
+                if (this.sanity <= 0) { this.sanity = 0; this.endGame('forgotten'); return; }
+
+                if ((this.fire < 15 || this.sanity < 30) && Math.random() > 0.8) {
+                    this.log(getRndText('ambientHorror'), "forest");
+                }
+
+                this.saveGame(); this.updateUI();
+            },
+
+            interactDecision() {
+                if (Math.random() < 0.4) { this.openDialogue(); } else { this.openMinigame(); }
+            },
+
+            openDialogue() {
+                this.playClickSound(); this.mgActive = true; this.mgResolving = false; this.updateUI();
+                const dialogues = LANG_DATA[this.currentLang].dialogues;
+                this.currentDialogue = dialogues[Math.floor(Math.random() * dialogues.length)];
+                document.getElementById('dial-desc').innerText = `"${this.currentDialogue.desc}"`;
+                for (let i = 0; i < 3; i++) { document.getElementById(`btn-dial-${i}`).innerText = this.currentDialogue.opts[i].t; }
+                document.getElementById('dialogue-overlay').style.display = 'flex';
+            },
+
+            chooseDialogue(optIndex) {
+                if (this.mgResolving) return; this.mgResolving = true; this.playClickSound();
+                const opt = this.currentDialogue.opts[optIndex];
+                if (opt.r === 'win') {
+                    this.sanity = Math.min(this.sanity + 15, 100); this.tryDropArchive('lor');
+                } else if (opt.r === 'fail') {
+                    this.sanity -= 10;
+                } else {
+                    this.sanity = Math.min(this.sanity + 5, 100);
+                }
+                this.log(opt.rep, opt.r === 'fail' ? "forest" : "woman");
+                setTimeout(() => {
+                    document.getElementById('dialogue-overlay').style.display = 'none';
+                    this.mgActive = false; this.interactionReady = false; this.updateUI();
+                }, 500);
+            },
+
+            openMinigame() {
+                this.playClickSound(); this.mgActive = true; this.mgResolving = false; this.interactionReady = false; this.updateUI();
+                document.getElementById('mg-overlay').style.display = 'flex';
+                const games = ['sincronia', 'resistencia', 'reflexo', 'foco', 'equilibrio', 'precisao']; this.mgCurrent = games[Math.floor(Math.random() * games.length)];
+                const title = document.getElementById('mg-title'); const desc = document.getElementById('mg-desc'); const bar = document.getElementById('mg-bar-container'); const btn = document.getElementById('btn-mg-action');
+                bar.style.display = 'none'; this.mgState = { phase: 'intro' }; btn.innerText = t('btnReady');
+                const mgData = LANG_DATA[this.currentLang].mg;
+                if (this.mgCurrent === 'sincronia') { title.innerText = mgData.syncT; desc.innerText = mgData.syncD; }
+                else if (this.mgCurrent === 'resistencia') { title.innerText = mgData.resT; desc.innerText = mgData.resD; }
+                else if (this.mgCurrent === 'reflexo') { title.innerText = mgData.refT; desc.innerText = mgData.refD; }
+                else if (this.mgCurrent === 'foco') { title.innerText = mgData.focT; desc.innerText = mgData.focD; }
+                else if (this.mgCurrent === 'equilibrio') { title.innerText = mgData.equT; desc.innerText = mgData.equD; }
+                else if (this.mgCurrent === 'precisao') { title.innerText = mgData.preT; desc.innerText = mgData.preD; }
+            },
+
+            startActualMinigame() {
+                this.mgState.phase = 'playing'; const cursor = document.getElementById('mg-cursor'); const target = document.getElementById('mg-target'); const bar = document.getElementById('mg-bar-container'); const btn = document.getElementById('btn-mg-action');
+                bar.style.display = 'block'; cursor.style.width = '4px'; cursor.style.background = '#fff'; bar.style.background = '#111'; target.style.display = 'block'; cursor.style.display = 'block'; const mgData = LANG_DATA[this.currentLang].mg;
+                if (this.mgCurrent === 'sincronia') { target.style.left = '40%'; target.style.width = '20%'; this.mgCursorPos = 0; this.mgDirection = (window.innerWidth < 600) ? 0.8 : 1.2; btn.innerText = mgData.btnSync; this.runMinigameLoop(); }
+                else if (this.mgCurrent === 'resistencia') { target.style.display = 'none'; cursor.style.left = '0'; cursor.style.width = '20%'; this.mgState.progress = 20; btn.innerText = mgData.btnRes; this.runMinigameLoop(); }
+                else if (this.mgCurrent === 'reflexo') { target.style.display = 'none'; cursor.style.display = 'none'; this.mgState.ready = false; btn.innerText = t('txtWait'); this.mgState.timeout = setTimeout(() => { if (!this.mgActive || this.mgCurrent !== 'reflexo') return; this.mgState.ready = true; bar.style.background = '#fff'; btn.innerText = t('txtNow'); this.mgState.reactionTimeout = setTimeout(() => { if (this.mgActive && this.mgState.ready) this.failMinigame(); }, 1100); }, 1500 + Math.random() * 2500); }
+                else if (this.mgCurrent === 'foco') { this.mgState.hits = 0; this.setFocoTarget(); this.mgCursorPos = 0; this.mgDirection = (window.innerWidth < 600) ? 1.2 : 1.6; btn.innerText = mgData.btnFoc; this.runMinigameLoop(); }
+                else if (this.mgCurrent === 'equilibrio') { target.style.left = '40%'; target.style.width = '20%'; this.mgState.progress = 0; this.mgCursorPos = 50; btn.innerText = mgData.btnEqu; this.runMinigameLoop(); }
+                else if (this.mgCurrent === 'precisao') { target.style.left = '48%'; target.style.width = '4%'; this.mgCursorPos = 0; this.mgDirection = (window.innerWidth < 600) ? 1.6 : 2.0; btn.innerText = mgData.btnPre; this.runMinigameLoop(); }
+            },
+
+            setFocoTarget() { const target = document.getElementById('mg-target'); const newPos = 10 + Math.random() * 70; target.style.left = newPos + '%'; target.style.width = '12%'; this.mgState.targetStart = newPos; this.mgState.targetEnd = newPos + 12; },
+
+            runMinigameLoop() {
+                if (!this.mgActive) return; const cursor = document.getElementById('mg-cursor');
+                if (this.mgCurrent === 'sincronia' || this.mgCurrent === 'foco' || this.mgCurrent === 'precisao') { this.mgCursorPos += this.mgDirection; if (this.mgCursorPos >= 100) { this.mgCursorPos = 100; this.mgDirection *= -1; } else if (this.mgCursorPos <= 0) { this.mgCursorPos = 0; this.mgDirection *= -1; } cursor.style.left = this.mgCursorPos + '%'; }
+                else if (this.mgCurrent === 'resistencia') { this.mgState.progress -= 0.4; if (this.mgState.progress <= 0) { this.failMinigame(); return; } cursor.style.width = this.mgState.progress + '%'; }
+                else if (this.mgCurrent === 'equilibrio') { 
+                    this.mgCursorPos -= 0.35; 
+                    if (this.mgCursorPos < 0) { this.mgCursorPos = 0; this.failMinigame(); return; }
+                    if (this.mgCursorPos > 100) { this.mgCursorPos = 100; }
+                    cursor.style.left = this.mgCursorPos + '%';
+                    if (this.mgCursorPos >= 40 && this.mgCursorPos <= 60) { this.mgState.progress += 0.8; document.getElementById('mg-target').style.background = 'rgba(0,255,0,0.3)'; } else { document.getElementById('mg-target').style.background = 'rgba(125,75,167,0.3)'; }
+                    if (this.mgState.progress >= 100) { cancelAnimationFrame(this.mgAnimFrame); this.winMinigame(); return; }
+                }
+                this.mgAnimFrame = requestAnimationFrame(() => this.runMinigameLoop());
+            },
+
+            checkMinigame() {
+                if (this.mgResolving) return; this.playClickSound(); if (this.mgState.phase === 'intro') { this.startActualMinigame(); return; }
+                if (this.mgCurrent === 'sincronia') { cancelAnimationFrame(this.mgAnimFrame); if (this.mgCursorPos >= 40 && this.mgCursorPos <= 60) this.winMinigame(); else this.failMinigame(); }
+                else if (this.mgCurrent === 'resistencia') { this.mgState.progress += 10; if (this.mgState.progress >= 100) { this.mgState.progress = 100; cancelAnimationFrame(this.mgAnimFrame); this.winMinigame(); } }
+                else if (this.mgCurrent === 'reflexo') { if (this.mgState.ready) { clearTimeout(this.mgState.reactionTimeout); this.winMinigame(); } else { clearTimeout(this.mgState.timeout); this.failMinigame(); } }
+                else if (this.mgCurrent === 'foco') { if (this.mgCursorPos >= this.mgState.targetStart && this.mgCursorPos <= this.mgState.targetEnd) { this.mgState.hits++; if (this.mgState.hits >= 2) { cancelAnimationFrame(this.mgAnimFrame); this.winMinigame(); } else { this.mgDirection *= 1.2; this.setFocoTarget(); document.getElementById('mg-target').style.background = 'rgba(0,255,0,0.5)'; setTimeout(() => document.getElementById('mg-target').style.background = 'rgba(125,75,167,0.3)', 200); } } else { cancelAnimationFrame(this.mgAnimFrame); this.failMinigame(); } }
+                else if (this.mgCurrent === 'equilibrio') { this.mgCursorPos += 12; if (this.mgCursorPos > 100) { this.mgCursorPos = 100; } }
+                else if (this.mgCurrent === 'precisao') { cancelAnimationFrame(this.mgAnimFrame); if (this.mgCursorPos >= 48 && this.mgCursorPos <= 52) { this.winMinigame(); } else { this.failMinigame(); } }
+            },
+
+            winMinigame() {
+                if (this.mgResolving) return; this.mgResolving = true; this.sanity = Math.min(this.sanity + 20, 100); document.getElementById('mg-bar-container').style.background = "#0f0";
+                setTimeout(() => { this.log(getRndText('intWin'), "woman"); this.closeMinigame(); this.tryDropArchive('lor'); }, 800);
+            },
+
+            failMinigame() {
+                if (this.mgResolving) return; this.mgResolving = true; document.getElementById('mg-bar-container').style.background = "#f00";
+                setTimeout(() => { this.log(getRndText('intFail'), "lore"); this.closeMinigame(); }, 800);
+            },
+
+            closeMinigame() { document.getElementById('mg-overlay').style.display = 'none'; document.getElementById('mg-bar-container').style.background = "#111"; this.mgActive = false; this.updateUI(); },
+
+            renderArchive(type) {
+                document.querySelectorAll('.arch-tab').forEach(t => t.classList.remove('active')); event.currentTarget.classList.add('active');
+                const contentBox = document.getElementById('archive-content'); contentBox.innerHTML = '';
+                const max = 8; const unlocked = this.archiveProgress[type]; const data = LANG_DATA[this.currentLang].archive[type];
+                for (let i = 0; i < max; i++) {
+                    const itemDiv = document.createElement('div');
+                    if (i < unlocked) { itemDiv.className = 'arch-item'; itemDiv.innerHTML = `<h4>${data[i].t}</h4><p>${data[i].d}</p>`; }
+                    else { itemDiv.className = 'arch-item locked'; itemDiv.innerHTML = `<p>???</p>`; }
+                    contentBox.appendChild(itemDiv);
+                }
+            },
+
+            saveGame() { if (!this.active) return; localStorage.setItem('silentWoodSave', JSON.stringify({ clicks: this.clicks, wood: this.wood, fire: this.fire, sanity: this.sanity, totalExplored: this.totalExplored, timePlayed: this.timePlayed, meat: this.meat, ashes: this.ashes, pop: this.pop, popIdle: this.popIdle, buildings: this.buildings, jobs: this.jobs, flags: this.flags, log: document.getElementById('log').innerHTML })); },
+            loadGame() { const saved = localStorage.getItem('silentWoodSave'); if (!saved) return false; try { const data = JSON.parse(saved); this.clicks = data.clicks; this.wood = data.wood; this.fire = data.fire; this.sanity = data.sanity; this.totalExplored = data.totalExplored; this.timePlayed = data.timePlayed || 0; this.meat = data.meat || 0; this.ashes = data.ashes || 0; this.pop = data.pop || 0; this.popIdle = data.popIdle || 0; if(data.buildings) this.buildings = data.buildings; if(data.jobs) this.jobs = data.jobs; if(data.flags) this.flags = data.flags; else this.flags = { campUnlocked: false, popUnlocked: false }; document.getElementById('log').innerHTML = data.log; return true; } catch (e) { return false; } },
+            clearGameSave() { localStorage.removeItem('silentWoodSave'); },
+            saveMeta() { localStorage.setItem('silentWoodMeta', JSON.stringify({ droneEnabled: this.droneEnabled, lang: this.currentLang, arch: this.archiveProgress })); },
+            loadMeta() { try { const data = JSON.parse(localStorage.getItem('silentWoodMeta')); if (data) { this.droneEnabled = data.droneEnabled; if (data.lang) { this.currentLang = data.lang; document.getElementById('lang-select').value = data.lang; } if (data.arch) { this.archiveProgress = data.arch; } } } catch (e) { } },
+            resetAllProgress() { if (!confirm(this.currentLang === 'pt' ? "CUIDADO: Isso apagará TUDO permanentemente." : "WARNING: This will delete EVERYTHING permanently.")) return; this.clearGameSave(); localStorage.removeItem('silentWoodMeta'); location.reload(); },
+
+            toggleDrone() { this.droneEnabled = !this.droneEnabled; document.getElementById('btn-toggle-drone').innerText = this.droneEnabled ? t('txtOn') : t('txtOff'); this.updateAudioVolumes(); this.saveMeta(); },
+
+            endGame(finalKey, isDemoForce = false) {
+                this.active = false;
+                if (!isDemoForce) {
+                    if (this.sanity <= 0) finalKey = 'forgotten';
+                }
+                const f = LANG_DATA[this.currentLang].finals[finalKey]; if (!f) return;
+                this.clearGameSave();
+
+                document.getElementById('ui-end-header').innerText = t('endHead');
+                document.getElementById('end-title').innerText = f.title; document.getElementById('end-type').innerText = f.type; document.getElementById('end-desc').innerText = f.desc; document.getElementById('btn-end-restart').innerText = t('btnRestart');
+
+                this.updateUI(); this.switchScreen('end-screen');
+            },
+
+            updateUI() {
+                document.getElementById('f-count').innerText = Math.floor(this.fire); document.getElementById('s-count').innerText = Math.floor(this.sanity); document.getElementById('w-count').innerText = Math.floor(this.wood);
+                if(this.flags && this.flags.campUnlocked && document.getElementById('camp-box')) {
+                    document.getElementById('camp-box').style.display = 'block';
+                    document.getElementById('meat-count').innerText = Math.floor(this.meat); document.getElementById('ash-count').innerText = Math.floor(this.ashes);
+                    let maxPop = this.buildings.tent * 2; document.getElementById('pop-count').innerText = `${this.pop}/${maxPop}`;
+                    document.getElementById('lbl-job-gath').innerHTML = `${t('jGath')}: ${this.jobs.gatherer}`; document.getElementById('lbl-job-trap').innerHTML = `${t('jTrap')}: ${this.jobs.trapper}`; document.getElementById('lbl-job-keep').innerHTML = `${t('jKeep')}: ${this.jobs.keeper}`;
+                    document.getElementById('txt-b-trap').innerText = t('bTrap'); document.getElementById('txt-b-tent').innerText = t('bTent'); document.getElementById('txt-b-totem').innerText = t('bTotem');
+                    document.getElementById('ui-stat-meat').innerText = t('cMeat'); document.getElementById('ui-stat-ashes').innerText = t('cAsh'); document.getElementById('ui-stat-pop').innerText = t('cPop');
+                } else if (document.getElementById('camp-box')) { document.getElementById('camp-box').style.display = 'none'; }
+                document.getElementById('progress-bar').style.width = Math.min((this.clicks / 1000) * 100, 100) + "%";
+
+                document.getElementById('arch-count-mem').innerText = `${this.archiveProgress.mem}/8`; document.getElementById('arch-count-art').innerText = `${this.archiveProgress.art}/8`; document.getElementById('arch-count-lor').innerText = `${this.archiveProgress.lor}/8`;
+
+                this.updateAudioVolumes();
+
+                const logBox = document.getElementById('log');
+                if (this.sanity < 30) { document.body.classList.add('insanity-mode'); logBox.classList.add('glitch-text'); }
+                else { document.body.classList.remove('insanity-mode'); logBox.classList.remove('glitch-text'); }
+
+                const btnTalk = document.getElementById('btn-talk');
+                if (this.interactionReady && !this.mgActive) { btnTalk.disabled = false; btnTalk.style.borderColor = "var(--mystic)"; btnTalk.style.color = "var(--mystic)"; }
+                else { btnTalk.disabled = true; btnTalk.innerText = t('btnTalk'); btnTalk.style.borderColor = "transparent"; btnTalk.style.color = "var(--text)"; }
+                document.getElementById('btn-continue').disabled = !localStorage.getItem('silentWoodSave');
+            },
+            log(msg, cls) {
+                const logBox = document.getElementById('log'); const entry = document.createElement('div');
+                entry.className = `log-entry ${cls}`; entry.innerHTML = msg; logBox.appendChild(entry);
+                while (logBox.children.length > 50) { logBox.removeChild(logBox.firstChild); }
+                logBox.scrollTo({ top: logBox.scrollHeight, behavior: 'smooth' });
+            }
+        };
+
+        window.onload = () => engine.init();
+    </script>
+</body>
+
+</html>
