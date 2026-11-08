@@ -6,69 +6,90 @@
 <meta name="theme-color" content="#07060a">
 <title>Ascensão — 100 Andares</title>
 <style>
-:root{--bg:#07060a;--panel:#16121f;--fg:#ece6d6;--mut:#8f8799;--gold:#d8ab3c;--red:#c63c3c;--vz:#6a2fa0}
+:root{--bg:#07060a;--panel:#1a1626;--edge:#3a3350;--fg:#ece6d6;--mut:#8f8799;--gold:#d8ab3c;--red:#c63c3c;--vz:#6a2fa0}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow:hidden;touch-action:none;-webkit-user-select:none;user-select:none}
 #app{display:flex;flex-direction:column;height:100vh;height:100dvh;max-width:500px;margin:0 auto;padding-top:env(safe-area-inset-top)}
-#hud{padding:10px 16px 6px;display:grid;gap:6px}
-#row1{display:flex;justify-content:space-between;align-items:baseline;font-weight:700}
-#floor{font-size:20px;color:var(--gold)}
-#pots{font-size:15px}
-#bar{height:10px;background:#2a1717;border-radius:5px;overflow:hidden}
+#hud{padding:8px 12px 4px;display:grid;gap:4px;background:#0d0b12;border-bottom:2px solid var(--edge)}
+#row1{display:flex;justify-content:space-between;align-items:baseline;font-weight:700;font-size:14px}
+#floor{font-size:18px;color:var(--gold)}
+#bar{height:8px;background:#2a1717;border-radius:4px;overflow:hidden}
 #hp{height:100%;width:100%;background:var(--red);transition:width .2s}
-#vz{font-size:13px;color:#b68de0}
-#msg{font-size:13px;color:var(--mut);min-height:18px;line-height:1.3}
-#cv{flex:1;min-height:0;width:100%;display:block}
-#ctl{display:flex;gap:10px;padding:8px 16px calc(12px + env(safe-area-inset-bottom))}
-button{flex:1;padding:14px;border:0;border-radius:12px;background:var(--panel);color:var(--fg);font-size:16px;font-weight:600;font-family:inherit}
+#vz{font-size:12px;color:#b68de0}
+#log{font-size:12px;color:var(--mut);height:44px;line-height:1.35;overflow:hidden;white-space:pre-line}
+#cv{flex:1;min-height:0;width:100%;display:block;background:#07060a}
+#ctl{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:6px 8px calc(8px + env(safe-area-inset-bottom));background:#0d0b12;border-top:2px solid var(--edge)}
+button{padding:12px 4px;border:2px solid var(--edge);border-radius:8px;background:var(--panel);color:var(--fg);font-size:14px;font-weight:600;font-family:inherit}
 button:disabled{opacity:.4}
-#end{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;text-align:center;padding:24px}
-#end.on{display:flex}
-#end div{max-width:320px}
-#end h1{font-size:28px;margin:0 0 10px;color:var(--gold)}
-#end p{color:var(--mut);line-height:1.45;margin:0 0 20px}
+#inv,#end{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;text-align:center;padding:20px}
+#inv.on,#end.on{display:flex}
+.box{background:var(--panel);border:2px solid var(--edge);border-radius:12px;padding:16px;width:100%;max-width:340px}
+.box h2,#end h1{margin:0 0 10px;color:var(--gold);font-size:22px}
+#invlist{display:grid;gap:6px;margin-bottom:12px;max-height:50vh;overflow:auto}
+#invlist button{text-align:left;font-weight:500}
+#invlist p{color:var(--mut);margin:0}
+#end p{color:var(--mut);line-height:1.45;margin:0 0 18px}
 </style>
 </head>
 <body>
 <div id="app">
   <div id="hud">
-    <div id="row1"><span id="floor">Andar 100</span><span id="pots">🧪 2</span></div>
+    <div id="row1"><span id="floor">Andar 100</span><span id="stat"></span></div>
     <div id="bar"><div id="hp"></div></div>
     <div id="vz"></div>
-    <div id="msg"></div>
+    <div id="log"></div>
   </div>
   <canvas id="cv"></canvas>
   <div id="ctl">
-    <button id="bp">🧪 Poção</button>
+    <button id="bs">🔍 Buscar</button>
     <button id="bw">⏳ Esperar</button>
+    <button id="bp">🧪</button>
+    <button id="bi">🎒 Mochila</button>
   </div>
 </div>
-<div id="end"><div><h1 id="et"></h1><p id="ep"></p><button id="br">Recomeçar</button></div></div>
+<div id="inv"><div class="box"><h2>Mochila</h2><div id="invlist"></div><button id="bclose">Fechar</button></div></div>
+<div id="end"><div class="box"><h1 id="et"></h1><p id="ep"></p><button id="br">Recomeçar</button></div></div>
 
 <script>
 // ===== Ajustes de balanceamento =====
-const COLS = 15, ROWS = 21, MAXF = 100;
-const MULT_MIN = 0.5, MULT_MAX = 1.5;          // inimigos: fracos no Andar 1, fortes no Andar 100
-const VZ_BASE = 0.5, VZ_GROWTH = 0.02, VZ_CAP = 1.6; // velocidade do Vazio por andar subido
+const COLS = 17, ROWS = 25, MAXF = 100, SIGHT = 8;
+const MULT_MIN = 0.5, MULT_MAX = 1.5;               // inimigos: fracos no Andar 1, fortes no Andar 100
+const VZ_BASE = 0.5, VZ_GROWTH = 0.02, VZ_CAP = 1.6; // Vazio: acelera a cada andar subido
+const INV_MAX = 10;
+
+// ===== Dados =====
+const T_FLOOR = 0, T_WALL = 1, T_DOOR = 2, T_GRASS = 3, T_STAIRS = 4, T_SECRET = 5;
+const PASS = t => t === T_FLOOR || t === T_DOOR || t === T_GRASS || t === T_STAIRS;
 const DIRS = [[1,0],[-1,0],[0,1],[0,-1]];
 const TIERS = [
   { ch:'🐀', name:'Rato',      hp:4,  dmg:2 },
   { ch:'💀', name:'Esqueleto', hp:8,  dmg:3 },
-  { ch:'👹', name:'Ogro',      hp:16, dmg:4 },
-  { ch:'😈', name:'Demônio',   hp:26, dmg:6 },
+  { ch:'🟢', name:'Gosma',     hp:12, dmg:2 },
+  { ch:'👹', name:'Ogro',      hp:18, dmg:4 },
+  { ch:'😈', name:'Demônio',   hp:28, dmg:6 },
 ];
+const ITEM = {
+  pot:  { ch:'🧪', name:'Poção de Cura' },
+  food: { ch:'🍖', name:'Ração' },
+  tp:   { ch:'📜', name:'Pergaminho de Teleporte' },
+  map:  { ch:'📜', name:'Pergaminho de Mapa' },
+};
+const ITEM_KINDS = ['pot','pot','food','food','tp','map'];
+const TRAP = { veneno:{ ch:'☠️' }, rede:{ ch:'🕸️' }, alarme:{ ch:'🔔' } };
+const TRAP_KINDS = ['veneno','rede','alarme'];
 
+// ===== Estado =====
 const $ = id => document.getElementById(id);
 const cv = $('cv'), g = cv.getContext('2d');
 let W = 0, H = 0, T = 20, OX = 0, OY = 0;
-let S = null, L = null, ps = null;
+let S = null, L = null, ps = null, logLines = [];
 
 const inb = (x, y) => x >= 0 && y >= 0 && x < COLS && y < ROWS;
 const rnd = n => Math.floor(Math.random() * n);
 const pick = a => a[rnd(a.length)];
 const climbed = () => MAXF - S.floor;
 const vzSpeed = () => Math.min(VZ_CAP, VZ_BASE + climbed() * VZ_GROWTH);
-const vis = (x, y) => (x - S.px) ** 2 + (y - S.py) ** 2 <= 36;
+const occupied = (x, y) => (x === S.px && y === S.py) || (L.vz && x === L.vz.x && y === L.vz.y) || L.mons.some(q => q.x === x && q.y === y);
 
 // ===== Tela =====
 function resize() {
@@ -83,8 +104,8 @@ function resize() {
 addEventListener('resize', resize);
 
 // ===== Geração de andar =====
-function genFloor() {
-  const map = Array.from({ length: ROWS }, () => Array(COLS).fill(1));
+function genRooms() {
+  const map = Array.from({ length: ROWS }, () => Array(COLS).fill(T_WALL));
   const rooms = [];
   for (let t = 0; t < 200 && rooms.length < 7; t++) {
     const w = 3 + rnd(4), h = 3 + rnd(3);
@@ -92,14 +113,14 @@ function genFloor() {
     const ok = rooms.every(r => x + w + 1 < r.x || r.x + r.w + 1 < x || y + h + 1 < r.y || r.y + r.h + 1 < y);
     if (!ok) continue;
     rooms.push({ x, y, w, h, cx: x + (w >> 1), cy: y + (h >> 1) });
-    for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) map[j][i] = 0;
+    for (let j = y; j < y + h; j++) for (let i = x; i < x + w; i++) map[j][i] = T_FLOOR;
   }
   for (let i = 1; i < rooms.length; i++) {
     const a = rooms[i - 1], b = rooms[i];
     let x = a.cx, y = a.cy;
-    while (x !== b.cx) { map[y][x] = 0; x += Math.sign(b.cx - x); }
-    while (y !== b.cy) { map[y][x] = 0; y += Math.sign(b.cy - y); }
-    map[y][x] = 0;
+    while (x !== b.cx) { map[y][x] = T_FLOOR; x += Math.sign(b.cx - x); }
+    while (y !== b.cy) { map[y][x] = T_FLOOR; y += Math.sign(b.cy - y); }
+    map[y][x] = T_FLOOR;
   }
   return { map, rooms };
 }
@@ -112,7 +133,7 @@ function bfs(sx, sy) {
     const [x, y] = q[i];
     for (const [dx, dy] of DIRS) {
       const nx = x + dx, ny = y + dy;
-      if (inb(nx, ny) && d[ny][nx] < 0 && L.map[ny][nx] === 0) {
+      if (inb(nx, ny) && d[ny][nx] < 0 && PASS(L.map[ny][nx])) {
         d[ny][nx] = d[y][x] + 1; par[ny][nx] = [x, y]; q.push([nx, ny]);
       }
     }
@@ -120,39 +141,90 @@ function bfs(sx, sy) {
   return { d, par };
 }
 
-function reveal() {
-  for (let y = S.py - 6; y <= S.py + 6; y++)
-    for (let x = S.px - 6; x <= S.px + 6; x++)
-      if (inb(x, y) && vis(x, y)) L.disc[y][x] = true;
+// ===== Visão (linha de visão real) =====
+const blocksSight = (x, y) => { const t = L.map[y][x]; return t === T_WALL || t === T_SECRET; };
+function los(x0, y0, x1, y1) {
+  let dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+  let err = dx + dy, x = x0, y = y0;
+  while (!(x === x1 && y === y1)) {
+    if ((x !== x0 || y !== y0) && blocksSight(x, y)) return false;
+    const e2 = 2 * err;
+    if (e2 >= dy) { err += dy; x += sx; }
+    if (e2 <= dx) { err += dx; y += sy; }
+  }
+  return true;
+}
+function updateFov() {
+  L.vis = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
+  for (let y = S.py - SIGHT; y <= S.py + SIGHT; y++)
+    for (let x = S.px - SIGHT; x <= S.px + SIGHT; x++) {
+      if (!inb(x, y) || (x - S.px) ** 2 + (y - S.py) ** 2 > SIGHT * SIGHT) continue;
+      if (los(S.px, S.py, x, y)) { L.vis[y][x] = true; L.disc[y][x] = true; }
+    }
 }
 
+// ===== Andar =====
 function loadFloor() {
   let G;
-  do { G = genFloor(); } while (G.rooms.length < 3);
+  do { G = genRooms(); } while (G.rooms.length < 3);
   const { map, rooms } = G;
   const m = MULT_MIN + (MULT_MAX - MULT_MIN) * (S.floor - 1) / 99;   // escala por andar
-  const maxTier = 1 + (S.floor - 1) / 30;
-  L = { map, mons: [], items: [], vz: null,
+  const maxTier = 1 + (S.floor - 1) / 25;
+  L = { map, mons: [], items: [], traps: [], vz: null, vis: null,
         disc: Array.from({ length: ROWS }, () => Array(COLS).fill(false)) };
 
   const start = rooms[0], exit = rooms[rooms.length - 1];
   S.px = start.cx; S.py = start.cy;
   L.sx = exit.cx; L.sy = exit.cy;
+  map[L.sy][L.sx] = T_STAIRS;
 
+  // Portas nos gargalos dos corredores
+  for (let y = 1; y < ROWS - 1; y++) for (let x = 1; x < COLS - 1; x++) {
+    if (map[y][x] !== T_FLOOR) continue;
+    const hz = map[y-1][x] === T_WALL && map[y+1][x] === T_WALL && map[y][x-1] === T_FLOOR && map[y][x+1] === T_FLOOR;
+    const vt = map[y][x-1] === T_WALL && map[y][x+1] === T_WALL && map[y-1][x] === T_FLOOR && map[y+1][x] === T_FLOOR;
+    if ((hz || vt) && Math.random() < 0.4) map[y][x] = T_DOOR;
+  }
+  // Mato alto nas salas
+  for (let r = 1; r < rooms.length; r++) {
+    const R = rooms[r];
+    if (Math.random() > 0.35) continue;
+    for (let j = R.y; j < R.y + R.h; j++) for (let i = R.x; i < R.x + R.w; i++)
+      if (map[j][i] === T_FLOOR && Math.random() < 0.4) map[j][i] = T_GRASS;
+  }
+  // Armadilhas escondidas
+  const far = (x, y) => Math.max(Math.abs(x - S.px), Math.abs(y - S.py)) >= 4 && !(x === L.sx && y === L.sy);
+  for (let k = 0, n = 2 + rnd(3); k < n; k++) {
+    for (let t = 0; t < 50; t++) {
+      const x = rnd(COLS), y = rnd(ROWS);
+      if (PASS(map[y][x]) && far(x, y) && !L.traps.some(q => q.x === x && q.y === y)) {
+        L.traps.push({ x, y, type: pick(TRAP_KINDS), hidden: true }); break;
+      }
+    }
+  }
+  // Monstros (dormindo ou vagando)
   for (let r = 1; r < rooms.length; r++) {
     const R = rooms[r];
     const n = 1 + rnd(2) + (S.floor > 50 ? 1 : 0);
     for (let k = 0; k < n; k++) {
       const t = TIERS[Math.min(TIERS.length - 1, Math.floor(Math.random() * maxTier))];
       const x = R.x + rnd(R.w), y = R.y + rnd(R.h);
-      if (L.mons.some(q => q.x === x && q.y === y) || (x === L.sx && y === L.sy)) continue;
+      if (!PASS(map[y][x]) || L.mons.some(q => q.x === x && q.y === y) || (x === L.sx && y === L.sy)) continue;
       const hp = Math.max(1, Math.round(t.hp * m));
-      L.mons.push({ x, y, ch: t.ch, name: t.name, hp, max: hp, dmg: Math.max(1, Math.round(t.dmg * m)) });
+      L.mons.push({ x, y, ch: t.ch, name: t.name, hp, max: hp, dmg: Math.max(1, Math.round(t.dmg * m)),
+                    state: Math.random() < 0.6 ? 'sleep' : 'wander', lost: 0 });
     }
   }
+  // Itens do chão
   for (let k = 0, n = 1 + rnd(2); k < n; k++) {
     const R = pick(rooms.slice(1)), x = R.x + rnd(R.w), y = R.y + rnd(R.h);
-    if (!(x === L.sx && y === L.sy) && !L.items.some(i => i.x === x && i.y === y)) L.items.push({ x, y });
+    if (PASS(map[y][x]) && !(x === L.sx && y === L.sy) && !L.items.some(i => i.x === x && i.y === y))
+      L.items.push({ x, y, kind: pick(ITEM_KINDS) });
+  }
+  if (Math.random() < 0.4) {
+    const R = pick(rooms.slice(1)), x = R.x + rnd(R.w), y = R.y + rnd(R.h);
+    if (PASS(map[y][x]) && !(x === L.sx && y === L.sy)) L.items.push({ x, y, kind: 'food' });
   }
 
   // O Vazio nasce no ponto mais distante do jogador (caminho real).
@@ -167,159 +239,257 @@ function loadFloor() {
   L.vz = { x: vx, y: vy, acc: 0 };
   L.mons = L.mons.filter(q => !(q.x === vx && q.y === vy));
 
-  reveal();
+  updateFov();
 }
 
-// ===== Turnos =====
-function say(t) { $('msg').textContent = t; }
+const trapAt = (x, y) => L.traps.find(q => q.x === x && q.y === y);
+const itemAt = (x, y) => L.items.findIndex(i => i.x === x && i.y === y);
 
+// ===== Mensagens =====
+function say(t) { logLines.push(t); if (logLines.length > 3) logLines.shift(); }
+
+// ===== Ações do jogador =====
 function act(dx, dy) {
   if (!S || S.over) return;
+  if (S.stuck > 0) { S.stuck--; say('Você se debate na rede...'); return endTurn(); }
   const nx = S.px + dx, ny = S.py + dy;
-  if (!inb(nx, ny) || L.map[ny][nx] === 1) return;
+  if (!inb(nx, ny)) return;
 
   const m = L.mons.find(q => q.x === nx && q.y === ny);
   if (m) {
     const dmg = S.atk + rnd(3);
-    m.hp -= dmg;
+    m.hp -= dmg; m.state = 'hunt';
     if (m.hp <= 0) {
       L.mons = L.mons.filter(q => q !== m);
       say(`Você derrota ${m.name}.`);
-      if (Math.random() < 0.25) L.items.push({ x: m.x, y: m.y });
+      if (Math.random() < 0.2) L.items.push({ x: m.x, y: m.y, kind: pick(ITEM_KINDS) });
     } else say(`Você acerta ${m.name} (${dmg}).`);
     return endTurn();
   }
+  if (L.vz && nx === L.vz.x && ny === L.vz.y) return die('Você caminhou direto para o Vazio.');
+  if (!PASS(L.map[ny][nx])) return;
 
   S.px = nx; S.py = ny;
-  if (nx === L.sx && ny === L.sy) {
+  const tr = trapAt(nx, ny);
+  if (tr && tr.hidden) {
+    tr.hidden = false;
+    trigger(tr);
+    if (S.over) return refresh();
+  }
+  if (L.map[ny][nx] === T_STAIRS) {
     if (S.floor === 1) return win();
     S.floor--;
     say(`Você sobe para o Andar ${S.floor}. O Vazio acelera.`);
     loadFloor();
     return refresh();
   }
-  const ii = L.items.findIndex(i => i.x === nx && i.y === ny);
-  if (ii >= 0) { L.items.splice(ii, 1); S.pots++; say('Você pega uma poção.'); }
-  reveal();
+  const ii = itemAt(nx, ny);
+  if (ii >= 0) {
+    if (S.inv.length < INV_MAX) { S.inv.push(L.items[ii].kind); say(`Você pega: ${ITEM[L.items[ii].kind].name}.`); L.items.splice(ii, 1); }
+    else say('Mochila cheia.');
+  }
+  updateFov();
   endTurn();
 }
 
-function endTurn() {
-  // Monstros
-  for (const m of [...L.mons]) {
-    if (S.over) return;
-    if (!L.mons.includes(m)) continue;
-    const dist = Math.abs(m.x - S.px) + Math.abs(m.y - S.py);
-    if (dist === 1) {
-      const dmg = Math.max(1, m.dmg - S.def);
-      S.hp -= dmg;
-      say(`${m.name} te acerta (${dmg}).`);
-      if (S.hp <= 0) return die(`Morto por ${m.name}.`);
-      continue;
-    }
-    if (dist <= 7) {
-      let best = null, bd = dist;
-      for (const [dx, dy] of DIRS) {
-        const x = m.x + dx, y = m.y + dy;
-        if (!inb(x, y) || L.map[y][x] === 1 || (x === S.px && y === S.py)) continue;
-        if (L.mons.some(q => q !== m && q.x === x && q.y === y)) continue;
-        if (x === L.vz.x && y === L.vz.y) continue;
-        const nd = Math.abs(x - S.px) + Math.abs(y - S.py);
-        if (nd < bd) { bd = nd; best = [x, y]; }
-      }
-      if (best) { m.x = best[0]; m.y = best[1]; }
-    }
-  }
+function trigger(tr) {
+  if (tr.type === 'veneno') { S.hp -= 6; say('Armadilha de veneno! (-6)'); if (S.hp <= 0) die('Envenenado.'); }
+  else if (tr.type === 'rede') { S.stuck = 2; say('Você cai numa rede!'); }
+  else if (tr.type === 'alarme') { for (const m of L.mons) m.state = 'hunt'; say('Alarme! Os monstros acordam.'); }
+}
 
-  // O Vazio: persegue o jogador pelo caminho mais curto e devora o que encontra.
-  const v = L.vz;
-  v.acc += vzSpeed();
-  if (v.acc >= 1) {
-    const { d } = bfs(S.px, S.py);
-    while (v.acc >= 1) {
-      v.acc -= 1;
-      let next = null, bd = d[v.y][v.x];
-      for (const [dx, dy] of DIRS) {
-        const x = v.x + dx, y = v.y + dy;
-        if (!inb(x, y) || d[y][x] < 0) continue;
-        if (d[y][x] < bd) { bd = d[y][x]; next = [x, y]; }
-      }
-      if (!next) break;
-      v.x = next[0]; v.y = next[1];
-      if (v.x === S.px && v.y === S.py) return die('Engolido pelo Vazio.');
-      const mi = L.mons.findIndex(q => q.x === v.x && q.y === v.y);
-      if (mi >= 0) { L.mons.splice(mi, 1); say('O Vazio devora um monstro.'); }
-    }
+function search() {
+  if (!S || S.over) return;
+  let found = 0;
+  for (const tr of L.traps) {
+    if (tr.hidden && Math.max(Math.abs(tr.x - S.px), Math.abs(tr.y - S.py)) <= 2 && Math.random() < 0.6) { tr.hidden = false; found++; }
   }
-  refresh();
+  say(found ? `Você encontra ${found} armadilha(s).` : 'Nada encontrado por perto.');
+  endTurn();
 }
 
 function wait() { if (S && !S.over) { say('Você espera.'); endTurn(); } }
 
 function potion() {
-  if (!S || S.over || S.pots <= 0 || S.hp >= S.maxhp) return;
-  S.pots--; S.hp = Math.min(S.maxhp, S.hp + 12);
-  say('Você bebe uma poção (+12).');
+  if (!S || S.over) return;
+  const i = S.inv.indexOf('pot');
+  if (i < 0) return say('Você não tem poções.');
+  useItem(i);
+}
+
+function openInv() {
+  if (!S || S.over) return;
+  const list = $('invlist'); list.innerHTML = '';
+  if (!S.inv.length) list.innerHTML = '<p>Mochila vazia.</p>';
+  S.inv.forEach((k, i) => {
+    const b = document.createElement('button');
+    b.textContent = `${ITEM[k].ch} ${ITEM[k].name}`;
+    b.onclick = () => useItem(i);
+    list.appendChild(b);
+  });
+  $('inv').classList.add('on');
+}
+function closeInv() { $('inv').classList.remove('on'); }
+
+function useItem(i) {
+  if (!S || S.over) return;
+  const k = S.inv[i];
+  if (k === 'pot') {
+    if (S.hp >= S.maxhp) return say('Sua vida já está cheia.');
+    S.hp = Math.min(S.maxhp, S.hp + 15); say('Você bebe uma poção (+15).');
+  } else if (k === 'food') {
+    S.food = Math.min(100, S.food + 60); say('Você come uma ração (+60).');
+  } else if (k === 'tp') {
+    const dp = bfs(S.px, S.py).d, cand = [];
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++)
+      if (dp[y][x] >= 12 && !occupied(x, y)) cand.push([x, y]);
+    if (!cand.length) return say('O pergaminho falha.');
+    [S.px, S.py] = pick(cand); say('Você é teleportado!'); updateFov();
+  } else if (k === 'map') {
+    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) L.disc[y][x] = true;
+    say('O mapa do andar se revela.');
+  }
+  S.inv.splice(i, 1);
+  closeInv();
   endTurn();
 }
 
-function stepTowards(tx, ty) {
-  const { par } = bfs(S.px, S.py);
-  if (!par[ty][tx]) return;
-  let cur = [tx, ty];
-  while (par[cur[1]][cur[0]] && !(par[cur[1]][cur[0]][0] === S.px && par[cur[1]][cur[0]][1] === S.py))
-    cur = par[cur[1]][cur[0]];
-  act(cur[0] - S.px, cur[1] - S.py);
+// ===== Turno =====
+function moveMon(m, dp) {
+  let best = null, bd = dp[m.y][m.x];
+  if (bd < 0) return;
+  for (const [dx, dy] of DIRS) {
+    const x = m.x + dx, y = m.y + dy;
+    if (!inb(x, y) || dp[y][x] < 0 || occupied(x, y)) continue;
+    if (dp[y][x] < bd) { bd = dp[y][x]; best = [x, y]; }
+  }
+  if (best) { m.x = best[0]; m.y = best[1]; }
+}
+function wanderStep(m) {
+  const opts = DIRS.filter(([dx, dy]) => { const x = m.x + dx, y = m.y + dy; return inb(x, y) && PASS(L.map[y][x]) && !occupied(x, y); });
+  if (opts.length) { const [dx, dy] = pick(opts); m.x += dx; m.y += dy; }
 }
 
+function endTurn() {
+  if (!S || S.over) return;
+  // Fome
+  S.tick = (S.tick || 0) + 1;
+  if (S.tick % 2 === 0 && S.food > 0) S.food--;
+  if (S.food <= 0 && S.tick % 3 === 0) {
+    S.hp--; say('Você está morrendo de fome (-1).');
+    if (S.hp <= 0) return die('Morto de fome.');
+  }
+
+  // Monstros
+  const dp = bfs(S.px, S.py).d;
+  for (const m of [...L.mons]) {
+    if (S.over) return;
+    if (!L.mons.includes(m)) continue;
+    const vis = L.vis[m.y][m.x];
+    const dist = Math.abs(m.x - S.px) + Math.abs(m.y - S.py);
+    if (m.state === 'sleep') { if (vis && dist <= 6 && Math.random() < 0.2) m.state = 'hunt'; continue; }
+    if (m.state === 'wander') {
+      if (vis && dist <= 8) m.state = 'hunt';
+      else { if (Math.random() < 0.4) wanderStep(m); continue; }
+    }
+    m.lost = vis ? 0 : m.lost + 1;
+    if (m.lost >= 12) { m.state = 'wander'; continue; }
+    if (dist === 1) {
+      const dmg = Math.max(1, m.dmg - S.def);
+      S.hp -= dmg; say(`${m.name} te acerta (${dmg}).`);
+      if (S.hp <= 0) return die(`Morto por ${m.name}.`);
+      continue;
+    }
+    moveMon(m, dp);
+  }
+
+  // Vazio: persegue pelo caminho mais curto e devora o que encontra.
+  const v = L.vz;
+  v.acc += vzSpeed();
+  while (v.acc >= 1) {
+    v.acc -= 1;
+    let next = null, bd = dp[v.y][v.x];
+    for (const [dx, dy] of DIRS) {
+      const x = v.x + dx, y = v.y + dy;
+      if (inb(x, y) && dp[y][x] >= 0 && dp[y][x] < bd) { bd = dp[y][x]; next = [x, y]; }
+    }
+    if (!next) break;
+    v.x = next[0]; v.y = next[1];
+    if (v.x === S.px && v.y === S.py) return die('Engolido pelo Vazio.');
+    const mi = L.mons.findIndex(q => q.x === v.x && q.y === v.y);
+    if (mi >= 0) { L.mons.splice(mi, 1); say('O Vazio devora um monstro.'); }
+  }
+
+  updateFov();
+  refresh();
+}
+
+// ===== Fim de jogo =====
 function die(reason) {
   S.over = true;
   showEnd('Fim da linha', `${reason} Você chegou ao Andar ${S.floor} após subir ${climbed()} andares.`);
   refresh();
 }
-
 function win() {
   S.over = true;
   showEnd('Você saiu da masmorra!', 'Você subiu os 100 andares e escapou pela saída do Andar 1.');
   refresh();
 }
-
 function showEnd(t, p) { $('et').textContent = t; $('ep').textContent = p; $('end').classList.add('on'); }
 
 // ===== HUD =====
 function refresh() {
   if (!S || !L) return;
+  const pots = S.inv.filter(k => k === 'pot').length;
   $('floor').textContent = `Andar ${S.floor}`;
-  $('pots').textContent = `🧪 ${S.pots}`;
+  $('stat').textContent = `❤ ${Math.max(0, S.hp)}/${S.maxhp}   🍖 ${S.food}`;
   $('hp').style.width = Math.max(0, S.hp / S.maxhp * 100) + '%';
-  $('bp').disabled = S.over || S.pots <= 0 || S.hp >= S.maxhp;
-  $('bw').disabled = S.over;
+  $('bp').textContent = `🧪 ${pots}`;
+  $('bp').disabled = S.over || pots === 0;
+  $('bw').disabled = S.over; $('bs').disabled = S.over; $('bi').disabled = S.over;
   const d = bfs(S.px, S.py).d[L.vz.y][L.vz.x];
   $('vz').textContent = `🌑 Vazio a ${d >= 0 ? d : '?'} passos · ritmo ${vzSpeed().toFixed(2)}x · subindo ${climbed()}/99`;
+  $('log').textContent = logLines.join('\n');
 }
 
 // ===== Desenho =====
-function glyph(ch, x, y, scale = 0.75) {
+function glyph(ch, x, y, scale = 0.7) {
   g.font = `${Math.floor(T * scale)}px "Apple Color Emoji","Segoe UI Emoji",system-ui,sans-serif`;
   g.textAlign = 'center'; g.textBaseline = 'middle';
   g.fillText(ch, OX + x * T + T / 2, OY + y * T + T / 2 + 1);
 }
 
+function drawTile(x, y, t) {
+  const px = OX + x * T, py = OY + y * T, c = (x + y) % 2;
+  if (t === T_WALL || t === T_SECRET) {
+    g.fillStyle = '#4b4256'; g.fillRect(px, py, T, T);
+    g.fillStyle = '#5d5269'; g.fillRect(px, py, T, Math.max(2, T * 0.18));
+    g.fillStyle = '#332c3d'; g.fillRect(px, py + T * 0.8, T, T * 0.2);
+    return;
+  }
+  g.fillStyle = c ? '#2b2633' : '#27222e'; g.fillRect(px, py, T, T);
+  if (t === T_GRASS) {
+    g.fillStyle = '#2f6b3a';
+    for (const [a, b] of [[0.3,0.35],[0.7,0.6],[0.45,0.8]]) { g.beginPath(); g.arc(px + T*a, py + T*b, T*0.14, 0, Math.PI*2); g.fill(); }
+  } else if (t === T_DOOR) {
+    g.fillStyle = '#6b4a2b'; g.fillRect(px + T*0.18, py + T*0.05, T*0.64, T*0.9);
+    g.fillStyle = '#d8ab3c'; g.fillRect(px + T*0.64, py + T*0.5, T*0.1, T*0.1);
+  }
+}
+
 function draw() {
-  g.fillStyle = '#07060a';
-  g.fillRect(0, 0, W, H);
+  g.fillStyle = '#07060a'; g.fillRect(0, 0, W, H);
   if (!S || !L) return;
 
   for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) {
-    const px = OX + x * T, py = OY + y * T;
-    if (!L.disc[y][x]) { g.fillStyle = '#030204'; g.fillRect(px, py, T, T); continue; }
-    const wall = L.map[y][x] === 1;
-    g.fillStyle = wall ? '#2c2536' : '#171320';
-    g.fillRect(px + 0.5, py + 0.5, T - 1, T - 1);
-    if (!wall && x === L.sx && y === L.sy) glyph('🪜', x, y);
+    if (!L.disc[y][x]) { g.fillStyle = '#030204'; g.fillRect(OX + x * T, OY + y * T, T, T); continue; }
+    drawTile(x, y, L.map[y][x]);
+    if (!L.vis[y][x]) { g.fillStyle = 'rgba(0,0,0,0.55)'; g.fillRect(OX + x * T, OY + y * T, T, T); }
   }
-  for (const i of L.items) if (L.disc[i.y][i.x]) glyph('🧪', i.x, i.y, 0.6);
-  for (const m of L.mons) if (vis(m.x, m.y)) glyph(m.ch, m.x, m.y);
+  for (const tr of L.traps) if (!tr.hidden && L.disc[tr.y][tr.x]) glyph(TRAP[tr.type].ch, tr.x, tr.y, 0.55);
+  for (const i of L.items) if (L.disc[i.y][i.x]) glyph(ITEM[i.kind].ch, i.x, i.y, 0.6);
+  if (L.disc[L.sy][L.sx]) glyph('🪜', L.sx, L.sy, 0.8);
+  for (const m of L.mons) if (L.vis[m.y][m.x]) glyph(m.ch, m.x, m.y);
   glyph('🧗', S.px, S.py, 0.8);
 
   // Sombra do Vazio: sempre visível, pulsa, cobre o que está perto dele.
@@ -332,15 +502,23 @@ function draw() {
   g.beginPath(); g.arc(cx, cy, T * 3 * pulse, 0, Math.PI * 2); g.fill();
   glyph('🌑', v.x, v.y, 0.9);
 }
-
 function loop() { draw(); requestAnimationFrame(loop); }
 
 // ===== Controles =====
+function stepTowards(tx, ty) {
+  const { par } = bfs(S.px, S.py);
+  if (!par[ty][tx]) return;
+  let cur = [tx, ty];
+  while (par[cur[1]][cur[0]] && !(par[cur[1]][cur[0]][0] === S.px && par[cur[1]][cur[0]][1] === S.py))
+    cur = par[cur[1]][cur[0]];
+  act(cur[0] - S.px, cur[1] - S.py);
+}
+
 cv.addEventListener('pointerdown', e => { ps = { x: e.clientX, y: e.clientY }; });
 cv.addEventListener('pointerup', e => {
   if (!ps || !S || S.over) return;
   const dx = e.clientX - ps.x, dy = e.clientY - ps.y; ps = null;
-  if (Math.max(Math.abs(dx), Math.abs(dy)) > 24) {        // deslize = mover 1 casa
+  if (Math.max(Math.abs(dx), Math.abs(dy)) > 24) {          // deslize = 1 casa
     if (Math.abs(dx) > Math.abs(dy)) act(Math.sign(dx), 0);
     else act(0, Math.sign(dy));
     return;
@@ -349,28 +527,36 @@ cv.addEventListener('pointerup', e => {
   const tx = Math.floor((e.clientX - r.left - OX) / T), ty = Math.floor((e.clientY - r.top - OY) / T);
   if (!inb(tx, ty)) return;
   const dist = Math.abs(tx - S.px) + Math.abs(ty - S.py);
-  if (dist === 1) act(tx - S.px, ty - S.py);             // toque na casa vizinha
-  else if (dist > 1) stepTowards(tx, ty);                // toque distante = 1 passo no caminho
+  if (dist === 1) act(tx - S.px, ty - S.py);               // vizinha: move ou ataca
+  else if (dist > 1) stepTowards(tx, ty);                  // distante: 1 passo no caminho
 });
 
 addEventListener('keydown', e => {
-  const map = { ArrowUp:[0,-1], w:[0,-1], W:[0,-1], ArrowDown:[0,1], s:[0,1], S:[0,1],
-                ArrowLeft:[-1,0], a:[-1,0], A:[-1,0], ArrowRight:[1,0], d:[1,0], D:[1,0] };
-  const k = map[e.key];
-  if (k) { e.preventDefault(); act(k[0], k[1]); }
+  if ($('inv').classList.contains('on')) { if (e.key === 'Escape' || e.key === 'i') closeInv(); return; }
+  const mv = { ArrowUp:[0,-1], w:[0,-1], W:[0,-1], ArrowDown:[0,1], s:[0,1], S:[0,1],
+               ArrowLeft:[-1,0], a:[-1,0], A:[-1,0], ArrowRight:[1,0], d:[1,0], D:[1,0] }[e.key];
+  if (mv) { e.preventDefault(); act(mv[0], mv[1]); }
   else if (e.key === ' ') { e.preventDefault(); wait(); }
+  else if (e.key === 'f' || e.key === 'F') search();
   else if (e.key === 'p' || e.key === 'P') potion();
+  else if (e.key === 'i' || e.key === 'I') openInv();
 });
 
-$('bp').onclick = potion;
+$('bs').onclick = search;
 $('bw').onclick = wait;
+$('bp').onclick = potion;
+$('bi').onclick = openInv;
+$('bclose').onclick = closeInv;
 $('br').onclick = newRun;
 
 function newRun() {
-  S = { floor: MAXF, hp: 40, maxhp: 40, atk: 8, def: 3, pots: 2, over: false };
+  S = { floor: MAXF, hp: 40, maxhp: 40, atk: 8, def: 3, food: 100, inv: ['pot', 'pot', 'food'],
+        over: false, stuck: 0, tick: 0, px: 0, py: 0 };
+  logLines = [];
   loadFloor();
-  $('end').classList.remove('on');
-  say('Você cai no fundo da masmorra. Equipado: Lâmina do Primeiro Rei e Armadura Dracônica. Suba até o Andar 1.');
+  $('end').classList.remove('on'); closeInv();
+  say('Você cai no fundo da masmorra. Equipado: Lâmina do Primeiro Rei e Armadura Dracônica.');
+  say('Suba até o Andar 1 e saia pela escada.');
   refresh();
 }
 
